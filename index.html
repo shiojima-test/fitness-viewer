@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v1.9</title>
+<title>Fitness Viewer v2.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -22,7 +22,7 @@
   #pin:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(58,171,168,.18)}
   #gateBtn{background:var(--accent); color:#fff; border:none; font-weight:700; padding:12px 30px; border-radius:12px; font-size:15px; cursor:pointer;}
   #gateErr{color:#c0392b; font-size:13px; min-height:18px; margin:0}
-  #app{display:none; max-width:1400px; margin:0 auto; min-height:100vh; background:var(--bg)}
+  #app{display:none; max-width:none; margin:0 auto; min-height:100vh; background:var(--bg)}
   header.top{position:sticky; top:0; z-index:30; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px 0; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
   .ttl{display:flex; align-items:baseline; gap:6px; flex:0 0 auto}
   .ttl b{font-size:14px}
@@ -36,7 +36,7 @@
   #toc .toc-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:8px}
   #toc a{display:block; color:var(--text); text-decoration:none; font-size:13px; padding:5px 0; border-bottom:1px dashed var(--line)}
   #toc a:last-child{border-bottom:none}
-  .md{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px}
+  .md{max-width:1080px; margin:0 auto; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px}
   @media(min-width:760px){ .md{padding:28px 32px} }
   .md h1{font-size:21px; border-bottom:2px solid var(--line); padding-bottom:10px; margin:4px 0 18px}
   .md h2{font-size:17px; color:#1f7f7d; margin:28px 0 12px; border-left:4px solid var(--accent); padding-left:11px}
@@ -86,12 +86,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v1.9</p>
+  <p style="opacity:.45">v2.0</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v1.5</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v2.0</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
