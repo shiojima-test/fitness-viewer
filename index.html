@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v2.1</title>
+<title>Fitness Viewer v2.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -86,12 +86,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v2.1</p>
+  <p style="opacity:.45">v2.2</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v2.1</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v2.2</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -591,7 +591,22 @@
     if(content===null||content===undefined||content==='') return '<span class="empty">·</span>';
     var plain=content.replace(/[-*\s　・]/g,'');
     if(plain.indexOf('なし')===0) return '<span class="none">－ なし</span>';
-    return marked.parse(content);
+    var tmp=document.createElement('div');
+    tmp.innerHTML=marked.parse(content);
+    function esc(t){var d=document.createElement('span');d.textContent=t;return d.innerHTML;}
+    Array.prototype.forEach.call(tmp.querySelectorAll('table'),function(tb){
+      var ul=document.createElement('ul');
+      Array.prototype.forEach.call(tb.querySelectorAll('tbody tr'),function(tr){
+        var c=Array.prototype.map.call(tr.querySelectorAll('td'),function(e){return e.textContent.trim();});
+        if(!c.length||c.join('')==='') return;
+        var name=c[0]||'', part=(c.length>=3?c[1]:''), rest=(c.length>=3?c.slice(2).join(' / '):c.slice(1).join(' / '));
+        var li=document.createElement('li');
+        li.innerHTML='<strong>'+esc(name)+'</strong>'+(part?'（'+esc(part)+'）':'')+(rest?'：'+esc(rest):'');
+        ul.appendChild(li);
+      });
+      if(ul.children.length){tb.parentNode.replaceChild(ul,tb);}else{tb.parentNode.removeChild(tb);}
+    });
+    return tmp.innerHTML;
   }
 
   function renderCalendar(){
