@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.3</title>
+<title>Fitness Viewer v3.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -129,12 +129,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.3</p>
+  <p style="opacity:.45">v3.4</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.3</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.4</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -783,7 +783,7 @@
     var html='<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>';
     html+='<div class="mlist">';
     var any=false;
-    for(var i=0;i<7;i++){
+    for(var i=6;i>=0;i--){
       var dt=new Date(curMon); dt.setDate(dt.getDate()+i);
       var e=ENTRIES[ymd(dt)]; if(!e) continue; any=true;
       var isT=(ymd(dt)===tkey);
