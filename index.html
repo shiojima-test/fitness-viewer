@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v2.9</title>
+<title>Fitness Viewer v3.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -98,6 +98,27 @@
     .cell blockquote{font-size:10.5px; padding:4px 7px}
     .calwrap{-webkit-overflow-scrolling:touch}
   }
+  /* ---- スマホ(<=640px) 週表示：日付ごと縦リスト／日付ヘッダを上部固定／各行にセクション名を併記 ---- */
+  @media(max-width:640px){
+    body.calfix{height:100dvh; overflow:hidden}
+    body.calfix #app{height:100dvh; min-height:0; overflow:hidden; display:flex; flex-direction:column}
+    body.calfix header.top{flex:0 0 auto}
+    body.calfix main{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:8px}
+    body.calfix #content{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden}
+    body.calfix .weeknav{flex:0 0 auto; margin-bottom:6px}
+    body.calfix .updated{display:none}
+    .mlist{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-right:2px}
+    .mday{margin-bottom:14px; border:1px solid var(--line); border-radius:12px; background:var(--card)}
+    .mday.tday{border-color:var(--accent2); box-shadow:0 0 0 1px var(--accent2)}
+    .mdate{position:sticky; top:0; z-index:5; background:var(--thead); color:#7a4a08; font-weight:800; font-size:14px; padding:8px 12px; border-bottom:1px solid var(--line); border-radius:11px 11px 0 0}
+    .mday.tday .mdate{background:#ffe6c2}
+    .mdate .tbadge{background:var(--accent2); color:#fff; font-size:10px; font-weight:700; padding:1px 7px; border-radius:10px; margin-left:8px; vertical-align:middle}
+    .mrow{display:flex; align-items:stretch; border-top:1px solid var(--line)}
+    .msec{flex:0 0 64px; background:var(--bg2); color:#5a4a2e; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; text-align:center; padding:6px 4px; border-right:1px solid var(--line)}
+    .mcell{flex:1 1 auto; min-width:0}
+    .mwt{display:flex; align-items:center; font-weight:800; color:var(--accent); font-size:15px}
+    .mempty{padding:24px 12px; color:var(--muted); text-align:center}
+  }
 </style>
 </head>
 <body>
@@ -108,12 +129,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v2.9</p>
+  <p style="opacity:.45">v3.0</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v2.9</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.0</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -730,6 +751,32 @@
     '<div class="calwrap"><table class="cal"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
 
+  function renderMobile(){
+    var today=new Date(), tkey=ymd(today);
+    var ws=new Date(curMon), we=new Date(curMon); we.setDate(we.getDate()+6);
+    var wl=(ws.getMonth()+1)+'/'+ws.getDate()+' 〜 '+(we.getMonth()+1)+'/'+we.getDate();
+    var html='<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>';
+    html+='<div class="mlist">';
+    var any=false;
+    for(var i=0;i<7;i++){
+      var dt=new Date(curMon); dt.setDate(dt.getDate()+i);
+      var e=ENTRIES[ymd(dt)]; if(!e) continue; any=true;
+      var isT=(ymd(dt)===tkey);
+      html+='<section class="mday'+(isT?' tday':'')+'">';
+      html+='<div class="mdate">'+(dt.getMonth()+1)+'/'+dt.getDate()+'（'+WD[i]+'）'+(isT?'<span class="tbadge">今日</span>':'')+'</div>';
+      SECTIONS.forEach(function(sec){
+        var c=e.blocks[sec];
+        html+='<div class="mrow"><div class="msec">'+sec+'</div><div class="cell mcell">'+cellHtml(c==null?'':c)+'</div></div>';
+      });
+      var w=weightVal(e.blocks['体重']);
+      html+='<div class="mrow"><div class="msec">体重</div><div class="cell mcell mwt">'+(w!=null?w+' kg':'<span class="empty">·</span>')+'</div></div>';
+      html+='</section>';
+    }
+    if(!any) html+='<p class="mempty">この週の記録はありません</p>';
+    html+='</div>';
+    return html;
+  }
+
   function renderChartsPage(){
     toc.style.display='none'; content.className='';
     content.innerHTML=''+
@@ -785,7 +832,7 @@
   }
   function renderWeek(){
     toc.style.display='none'; content.className='';
-    content.innerHTML=renderCalendar();
+    content.innerHTML=(window.innerWidth<=640?renderMobile():renderCalendar());
     bindNav(); window.scrollTo(0,0);
   }
   function renderMd(which){
@@ -799,6 +846,7 @@
     window.scrollTo(0,0);
   }
   function render(which){ document.body.classList.toggle('calfix', which==='week'); if(which==='week')renderWeek(); else if(which==='charts')renderChartsPage(); else renderMd(which); }
+  var _rzt; window.addEventListener('resize',function(){ clearTimeout(_rzt); _rzt=setTimeout(function(){ if(document.body.classList.contains('calfix')) renderWeek(); },200); });
   document.querySelectorAll('.tab').forEach(function(b){
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
   });
