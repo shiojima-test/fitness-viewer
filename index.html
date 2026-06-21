@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.10</title>
+<title>Fitness Viewer v3.11</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -143,12 +143,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.10</p>
+  <p style="opacity:.45">v3.11</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.10</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.11</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -162,6 +162,8 @@
     <div class="updated" id="built"></div>
   </main>
 </div>
+
+<div id="rvModal"><div class="rvcard"><button id="rvClose" aria-label="閉じる">×</button><div id="rvBody" class="md"></div></div></div>
 
 <script type="text/plain" id="src-log"># デイリーログ（フィットネス記録）
 
@@ -1021,6 +1023,5 @@
   try{ if(localStorage.getItem('fv_ok')==='1'){ unlock(); } }catch(e){}
 })();
 </script>
-<div id="rvModal"><div class="rvcard"><button id="rvClose" aria-label="閉じる">×</button><div id="rvBody" class="md"></div></div></div>
 </body>
 </html>
