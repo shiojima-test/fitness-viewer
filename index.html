@@ -63,13 +63,14 @@
   table.cal thead th.sec{z-index:3}
   table.cal th.today,table.cal td.today{background:var(--today)}
   table.cal thead th.today{box-shadow:inset 0 -3px 0 var(--accent2)}
-  .cell{font-size:13px; line-height:1.6; padding:9px 10px}
-  .cell ul{margin:2px 0; padding-left:15px}
+  table.cal td:not(.sec){height:88px; padding:0}
+  .cell{font-size:13px; line-height:1.55; padding:8px 9px; height:88px; overflow:auto}
+  .cell ul{margin:1px 0; padding-left:14px}
   .cell li{margin:1px 0}
   .cell strong{color:#1f2a30}
   .cell .empty{color:#c9b896}
   .cell .none{color:var(--none); font-weight:700}
-  td.wt{font-size:13px; font-weight:800; text-align:center; vertical-align:middle; color:#1f2a30; padding:6px}
+  td.wt{font-size:14px; font-weight:800; text-align:center; vertical-align:middle; color:#1f2a30; padding:6px; height:42px}
   .cc{position:relative; height:220px}
   .cc canvas{width:100%!important; height:100%!important}
   .chartbox{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 16px 8px; margin-bottom:18px}
@@ -90,7 +91,7 @@
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v1.9</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v1.5</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -702,7 +703,7 @@
   document.querySelectorAll('.tab').forEach(function(b){
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
   });
-  document.getElementById('built').textContent='ページ生成: 2026-06-21 04:15 UTC';
+  document.getElementById('built').textContent='ページ生成: 2026-06-21 04:28 UTC';
 })();
 </script>
 </body>
