@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v1.7</title>
+<title>Fitness Viewer v1.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -63,7 +63,7 @@
   table.cal thead th.sec{z-index:3}
   table.cal th.today,table.cal td.today{background:var(--today)}
   table.cal thead th.today{box-shadow:inset 0 -3px 0 var(--accent2)}
-  .cell{font-size:13px; line-height:1.6; padding:9px 10px; max-height:210px; overflow:auto}
+  .cell{font-size:13px; line-height:1.6; padding:9px 10px; max-height:220px; overflow:auto}
   .cell ul{margin:2px 0; padding-left:15px}
   .cell li{margin:1px 0}
   .cell strong{color:#1f2a30}
@@ -85,7 +85,7 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v1.7</p>
+  <p style="opacity:.45">v1.8</p>
 </div>
 
 <div id="app">
@@ -93,6 +93,7 @@
     <div class="ttl"><b>Fitness Viewer</b><span>v1.5</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
+      <button class="tab" data-t="charts">推移グラフ</button>
       <button class="tab" data-t="log">記録</button>
       <button class="tab" data-t="insights">知の財産</button>
     </div>
@@ -626,11 +627,16 @@
 
     return ''+
     '<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>'+
-    '<div class="calwrap"><table class="cal"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<div class="chartbox"><div class="chartttl">体重推移（夜kg・目標72kg）</div><div class="cc"><canvas id="wchart"></canvas></div></div>'+
-    '<div class="chartbox"><div class="chartttl">週次トレ回数（朝・夕・夜トレの実施数）</div><div class="cc" style="height:200px"><canvas id="tchart"></canvas></div></div>';
+    '<div class="calwrap"><table class="cal"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
 
+  function renderChartsPage(){
+    toc.style.display='none'; content.className='';
+    content.innerHTML=''+
+      '<div class="chartbox"><div class="chartttl">体重推移（夜kg・目標72kg）</div><div class="cc" style="height:300px"><canvas id="wchart"></canvas></div></div>'+
+      '<div class="chartbox"><div class="chartttl">週次トレ回数（朝・夕・夜トレの実施数）</div><div class="cc" style="height:260px"><canvas id="tchart"></canvas></div></div>';
+    drawCharts(); window.scrollTo(0,0);
+  }
   var wChart=null, tChart=null;
   function drawCharts(){
     // 体重：日付昇順で体重がある日
@@ -680,7 +686,7 @@
   function renderWeek(){
     toc.style.display='none'; content.className='';
     content.innerHTML=renderCalendar();
-    bindNav(); drawCharts(); window.scrollTo(0,0);
+    bindNav(); window.scrollTo(0,0);
   }
   function renderMd(which){
     var md=which==='log'?srcLog:srcIns; content.className='md'; content.innerHTML=marked.parse(md);
@@ -692,11 +698,11 @@
     else toc.style.display='none';
     window.scrollTo(0,0);
   }
-  function render(which){ if(which==='week')renderWeek(); else renderMd(which); }
+  function render(which){ if(which==='week')renderWeek(); else if(which==='charts')renderChartsPage(); else renderMd(which); }
   document.querySelectorAll('.tab').forEach(function(b){
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
   });
-  document.getElementById('built').textContent='ページ生成: 2026-06-21 04:03 UTC';
+  document.getElementById('built').textContent='ページ生成: 2026-06-21 04:15 UTC';
 })();
 </script>
 </body>
