@@ -4,16 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v1.2</title>
+<title>Fitness Viewer v1.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
     --bg:#F5E4C4; --bg2:#efdcb6; --card:#fffaf0; --line:#e0cfa6;
     --text:#2d3439; --muted:#8a7d63; --accent:#3AABA8; --accent2:#E88A0A; --thead:#fbe8c9;
-    --ok:#2e9e6b; --none:#a99a7d; --miss:#d98324;
+    --ok:#2e9e6b; --none:#a99a7d; --miss:#cbb994; --today:#fff2da;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0; background:var(--bg); color:var(--text); font-family:"Meiryo","メイリオ",sans-serif; line-height:1.75; font-size:15px;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:"Meiryo","メイリオ",sans-serif; line-height:1.7; font-size:15px;}
   #gate{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;}
   #gate h1{font-size:18px; margin:0; font-weight:700}
   #gate p{margin:0; color:var(--muted); font-size:13px; text-align:center}
@@ -21,22 +22,21 @@
   #pin:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(58,171,168,.18)}
   #gateBtn{background:var(--accent); color:#fff; border:none; font-weight:700; padding:12px 30px; border-radius:12px; font-size:15px; cursor:pointer;}
   #gateErr{color:#c0392b; font-size:13px; min-height:18px; margin:0}
-  #app{display:none; max-width:900px; margin:0 auto; min-height:100vh; background:var(--bg)}
-  header.top{position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:1px solid var(--line); padding:16px 22px 0;}
+  #app{display:none; max-width:1100px; margin:0 auto; min-height:100vh; background:var(--bg)}
+  header.top{position:sticky; top:0; z-index:30; background:var(--bg); border-bottom:1px solid var(--line); padding:16px 20px 0;}
   .ttl{display:flex; align-items:baseline; gap:10px; margin-bottom:12px}
   .ttl b{font-size:18px}
   .ttl span{font-size:11px; color:var(--muted)}
   .tabs{display:flex; gap:8px}
-  .tab{flex:1; max-width:180px; text-align:center; padding:11px 4px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-size:13.5px; font-weight:700; border-bottom:3px solid transparent; font-family:inherit;}
+  .tab{flex:1; max-width:170px; text-align:center; padding:11px 4px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-size:13.5px; font-weight:700; border-bottom:3px solid transparent; font-family:inherit;}
   .tab.active{color:var(--text); border-bottom-color:var(--accent)}
-  main{padding:22px}
-  @media(min-width:760px){ main{padding:30px 40px} }
-  #toc{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:22px; box-shadow:0 1px 3px rgba(120,90,30,.06);}
-  #toc .toc-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:8px; letter-spacing:.05em}
+  main{padding:20px}
+  @media(min-width:760px){ main{padding:26px 32px} }
+  #toc{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:22px;}
+  #toc .toc-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:8px}
   #toc a{display:block; color:var(--text); text-decoration:none; font-size:13px; padding:5px 0; border-bottom:1px dashed var(--line)}
   #toc a:last-child{border-bottom:none}
-  /* markdown */
-  .md{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(120,90,30,.06)}
+  .md{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px}
   @media(min-width:760px){ .md{padding:28px 32px} }
   .md h1{font-size:21px; border-bottom:2px solid var(--line); padding-bottom:10px; margin:4px 0 18px}
   .md h2{font-size:17px; color:#1f7f7d; margin:28px 0 12px; border-left:4px solid var(--accent); padding-left:11px}
@@ -44,29 +44,35 @@
   .md blockquote{margin:14px 0; padding:10px 16px; background:var(--bg2); border-left:3px solid var(--accent2); color:var(--muted); font-size:13px; border-radius:0 10px 10px 0;}
   .md table{border-collapse:collapse; width:100%; font-size:12.5px; margin:14px 0; display:block; overflow-x:auto}
   .md th,.md td{border:1px solid var(--line); padding:7px 10px; text-align:left; white-space:nowrap}
-  .md th{background:var(--thead); color:#b5680a; font-weight:700}
+  .md th{background:var(--thead); color:#b5680a}
   .md tr:nth-child(even) td{background:#fffdf8}
   .md hr{border:none; border-top:1px solid var(--line); margin:24px 0}
   .md ul{padding-left:21px} .md li{margin:4px 0}
   .md strong{color:#1f2a30}
   .md code{background:var(--bg2); padding:1px 6px; border-radius:6px; font-size:12px; color:#9a5a00}
-  .md a{color:var(--accent)}
-  /* 週まとめ表 */
-  .weekwrap{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 1px 3px rgba(120,90,30,.06); overflow-x:auto}
-  .weekttl{font-size:15px; font-weight:800; margin:2px 0 12px}
-  table.week{border-collapse:collapse; font-size:13px; width:100%; min-width:560px}
-  table.week th,table.week td{border:1px solid var(--line); padding:8px 6px; text-align:center; white-space:nowrap}
-  table.week thead th{background:var(--thead); color:#b5680a; font-weight:700; position:sticky; top:0}
-  table.week td.day,table.week th.day{position:sticky; left:0; background:var(--bg2); font-weight:700; text-align:left; z-index:1}
-  table.week tbody tr:nth-child(even) td:not(.day){background:#fffdf8}
-  .sym{font-size:15px; font-weight:800}
-  .sym.done{color:var(--ok)}
-  .sym.none{color:var(--none)}
-  .sym.miss{color:var(--miss)}
-  td.wt{font-weight:700; color:#1f2a30}
-  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; font-size:12px; color:var(--muted)}
-  .legend b{font-weight:800}
-  .updated{color:var(--muted); font-size:11px; text-align:right; margin-top:28px}
+  /* 週ビュー */
+  .weeknav{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:14px}
+  .weeknav button{background:var(--card); border:1px solid var(--line); color:var(--text); font-size:18px; width:40px; height:40px; border-radius:10px; cursor:pointer; font-family:inherit}
+  .weeknav button:active{background:var(--bg2)}
+  .weeknav .wl{font-size:15px; font-weight:800; min-width:200px; text-align:center}
+  .calwrap{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; overflow-x:auto; margin-bottom:24px}
+  table.cal{border-collapse:collapse; width:100%; min-width:880px; table-layout:fixed}
+  table.cal th,table.cal td{border:1px solid var(--line); vertical-align:top}
+  table.cal thead th{background:var(--thead); color:#7a4a08; font-size:12.5px; padding:7px 4px; text-align:center; position:sticky; top:0}
+  table.cal th.sec,table.cal td.sec{width:74px; background:var(--bg2); font-weight:800; font-size:12px; text-align:center; vertical-align:middle; position:sticky; left:0; z-index:2; color:#5a4a2e}
+  table.cal thead th.sec{z-index:3}
+  table.cal th.today,table.cal td.today{background:var(--today)}
+  table.cal thead th.today{box-shadow:inset 0 -3px 0 var(--accent2)}
+  .cell{font-size:11px; line-height:1.55; padding:6px 7px; max-height:230px; overflow:auto}
+  .cell ul{margin:2px 0; padding-left:15px}
+  .cell li{margin:1px 0}
+  .cell strong{color:#1f2a30}
+  .cell .empty{color:#c9b896}
+  .cell .none{color:var(--none); font-weight:700}
+  td.wt{font-size:13px; font-weight:800; text-align:center; vertical-align:middle; color:#1f2a30; padding:6px}
+  .chartbox{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 16px 8px; margin-bottom:18px}
+  .chartttl{font-size:13.5px; font-weight:800; margin-bottom:8px; color:#5a4a2e}
+  .updated{color:var(--muted); font-size:11px; text-align:right; margin-top:24px}
 </style>
 </head>
 <body>
@@ -77,14 +83,14 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v1.2</p>
+  <p style="opacity:.45">v1.3</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v1.2</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v1.3</span></div>
     <div class="tabs">
-      <button class="tab active" data-t="week">週まとめ</button>
+      <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="log">記録</button>
       <button class="tab" data-t="insights">知の財産</button>
     </div>
@@ -477,107 +483,160 @@
   var srcIns=document.getElementById('src-insights').textContent;
   var content=document.getElementById('content'), toc=document.getElementById('toc');
   marked.setOptions({gfm:true, breaks:false});
-
-  var BLOCKS=['朝トレ','朝食','昼食','夕トレ','夕食','夜トレ'];
+  var SECTIONS=['朝トレ','朝食','昼食','夕トレ','夕食','夜トレ'];
+  var WD=['月','火','水','木','金','土','日'];
 
   function parseDays(md){
     var re=/##\s*▼\s*([^\n]+)/g, m, marks=[];
     while((m=re.exec(md))){ marks.push({label:m[1].trim(), idx:m.index}); }
     var days=[];
     for(var i=0;i<marks.length;i++){
-      var end = (i+1<marks.length)? marks[i+1].idx : md.length;
-      days.push({label:marks[i].label, text:md.slice(marks[i].idx, end)});
+      var end=(i+1<marks.length)?marks[i+1].idx:md.length;
+      days.push({label:marks[i].label, text:md.slice(marks[i].idx,end)});
     }
     return days;
   }
-  function blocksOf(dayText){
-    var map={}, cur=null, buf=[];
-    var lines=dayText.split('\n');
-    for(var i=0;i<lines.length;i++){
-      var line=lines[i];
-      var hm=line.match(/^###\s+(.+?)\s*$/);
-      if(hm){ if(cur!==null) map[cur]=buf.join('\n').trim(); cur=hm[1].trim(); buf=[]; }
-      else if(cur!==null){
-        if(/^##\s/.test(line) || /^---\s*$/.test(line)){ map[cur]=buf.join('\n').trim(); cur=null; buf=[]; }
-        else buf.push(line);
-      }
-    }
-    if(cur!==null) map[cur]=buf.join('\n').trim();
+  function blocksOf(t){
+    var map={},cur=null,buf=[];var ls=t.split('\n');
+    for(var i=0;i<ls.length;i++){var line=ls[i];var hm=line.match(/^###\s+(.+?)\s*$/);
+      if(hm){if(cur!==null)map[cur]=buf.join('\n').trim();cur=hm[1].trim();buf=[];}
+      else if(cur!==null){if(/^##\s/.test(line)||/^---\s*$/.test(line)){map[cur]=buf.join('\n').trim();cur=null;buf=[];}else buf.push(line);}}
+    if(cur!==null)map[cur]=buf.join('\n').trim();
     return map;
   }
-  function blockContent(bm, name){ return (name in bm)? bm[name] : null; }
-  function statusSym(content){
-    if(content===null||content==='') return {s:'×', c:'miss'};
+  function dateOf(label){
+    var m=label.match(/(\d{1,2})\/(\d{1,2})/); if(!m)return null;
+    var mo=+m[1],da=+m[2]; var now=new Date(); var y=now.getFullYear();
+    if(mo-(now.getMonth()+1)>6) y=y-1;
+    return new Date(y,mo-1,da);
+  }
+  function ymd(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+  function mondayOf(d){var x=new Date(d);var wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);x.setHours(0,0,0,0);return x;}
+  function weightVal(c){ if(!c)return null;
+    var m=c.match(/夜\s*\*?\*?\s*(\d{2,3}(?:\.\d)?)\s*kg/); if(m)return parseFloat(m[1]);
+    var m2=c.match(/(\d{2,3}(?:\.\d)?)\s*kg/); return m2?parseFloat(m2[1]):null; }
+
+  // 解析（1回）
+  var ENTRIES={}; // ymd -> {blocks, label, date}
+  parseDays(srcLog).forEach(function(d){
+    var dt=dateOf(d.label); if(!dt)return;
+    ENTRIES[ymd(dt)]={blocks:blocksOf(d.text), label:d.label, date:dt};
+  });
+
+  var curMon = mondayOf(new Date());
+
+  function cellHtml(content){
+    if(content===null||content===undefined||content==='') return '<span class="empty">·</span>';
     var plain=content.replace(/[-*\s　・]/g,'');
-    if(plain==='なし'||plain.indexOf('なし')===0 && plain.length<=4) return {s:'—', c:'none'};
-    return {s:'○', c:'done'};
-  }
-  function weightVal(content){
-    if(!content) return '';
-    var m=content.match(/夜\s*\*?\*?\s*(\d{2,3}(?:\.\d)?)\s*kg/);
-    if(m) return m[1];
-    var m2=content.match(/(\d{2,3}(?:\.\d)?)\s*kg/);
-    return m2? m2[1] : '○';
-  }
-  function shortDay(label){
-    // "06/21（日）" -> "6/21(日)"
-    var m=label.match(/(\d{1,2})\/(\d{1,2}).*?[（(]?\s*(.)?\s*[）)]?/);
-    var t=label.replace(/[（）]/g,function(c){return c==='（'?'(':')';});
-    t=t.replace(/^0/,'').replace('/0','/');
-    return t;
+    if(plain==='なし'||(plain.indexOf('なし')===0&&plain.length<=4)) return '<span class="none">－ なし</span>';
+    return marked.parse(content);
   }
 
-  function renderWeek(){
-    toc.style.display='none';
-    var days=parseDays(srcLog).slice(0,7); // 最新7日
+  function renderCalendar(){
+    var today=new Date(); var tkey=ymd(today);
+    var days=[]; for(var i=0;i<7;i++){var dt=new Date(curMon);dt.setDate(dt.getDate()+i);days.push(dt);}
+    // header
+    var head='<th class="sec">　</th>';
+    days.forEach(function(dt,i){
+      var cls=(ymd(dt)===tkey)?' today':'';
+      head+='<th class="'+cls.trim()+'">'+WD[i]+'<br>'+(dt.getMonth()+1)+'/'+dt.getDate()+'</th>';
+    });
+    // body
     var rows='';
-    days.forEach(function(d){
-      var bm=blocksOf(d.text);
-      var tds='<td class="day">'+shortDay(d.label)+'</td>';
-      BLOCKS.forEach(function(b){
-        var st=statusSym(blockContent(bm,b));
-        tds+='<td><span class="sym '+st.c+'">'+st.s+'</span></td>';
+    SECTIONS.forEach(function(sec){
+      var tds='<td class="sec">'+sec+'</td>';
+      days.forEach(function(dt){
+        var e=ENTRIES[ymd(dt)]; var c=e?e.blocks[sec]:null;
+        var cls=(ymd(dt)===tkey)?' today':'';
+        tds+='<td class="'+cls.trim()+'"><div class="cell">'+cellHtml(c==null?'':c)+'</div></td>';
       });
-      var w=weightVal(blockContent(bm,'体重'));
-      tds+='<td class="wt">'+(w||'<span class="sym miss">×</span>')+'</td>';
       rows+='<tr>'+tds+'</tr>';
     });
-    var head='<th class="day">日</th>';
-    BLOCKS.forEach(function(b){ head+='<th>'+b+'</th>'; });
-    head+='<th>体重</th>';
-    content.innerHTML =
-      '<div class="weekwrap">'+
-      '<div class="weekttl">直近7日サマリー</div>'+
-      '<table class="week"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table>'+
-      '<div class="legend"><span><b style="color:var(--ok)">○</b> 記録あり</span>'+
-      '<span><b style="color:var(--none)">—</b> なし(未実施)</span>'+
-      '<span><b style="color:var(--miss)">×</b> 未記録</span>'+
-      '<span>体重列＝夜kg</span></div></div>';
-    window.scrollTo(0,0);
+    // 体重行
+    var wtds='<td class="sec">体重</td>';
+    days.forEach(function(dt){
+      var e=ENTRIES[ymd(dt)]; var w=e?weightVal(e.blocks['体重']):null;
+      var cls=(ymd(dt)===tkey)?' today':'';
+      wtds+='<td class="wt'+cls+'">'+(w!=null?w:'<span class="empty" style="font-weight:400">·</span>')+'</td>';
+    });
+    rows+='<tr>'+wtds+'</tr>';
+
+    var ws=new Date(curMon), we=new Date(curMon); we.setDate(we.getDate()+6);
+    var wl=(ws.getMonth()+1)+'/'+ws.getDate()+' 〜 '+(we.getMonth()+1)+'/'+we.getDate();
+
+    return ''+
+    '<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>'+
+    '<div class="calwrap"><table class="cal"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="chartbox"><div class="chartttl">体重推移（夜kg・目標72kg）</div><canvas id="wchart" height="150"></canvas></div>'+
+    '<div class="chartbox"><div class="chartttl">週次トレ回数（朝・夕・夜トレの実施数）</div><canvas id="tchart" height="130"></canvas></div>';
+  }
+
+  var wChart=null, tChart=null;
+  function drawCharts(){
+    // 体重：日付昇順で体重がある日
+    var pts=Object.keys(ENTRIES).map(function(k){return ENTRIES[k];})
+      .filter(function(e){return weightVal(e.blocks['体重'])!=null;})
+      .sort(function(a,b){return a.date-b.date;});
+    var wl=pts.map(function(e){return (e.date.getMonth()+1)+'/'+e.date.getDate();});
+    var wv=pts.map(function(e){return weightVal(e.blocks['体重']);});
+    if(wChart)wChart.destroy();
+    var wc=document.getElementById('wchart');
+    if(wc){ wChart=new Chart(wc,{type:'line',
+      data:{labels:wl,datasets:[
+        {label:'夜体重',data:wv,borderColor:'#E88A0A',backgroundColor:'rgba(232,138,10,.12)',tension:.3,fill:true,pointRadius:4},
+        {label:'目標72kg',data:wl.map(function(){return 72;}),borderColor:'#3AABA8',borderDash:[6,4],pointRadius:0,fill:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#5a4a2e'}}},
+        scales:{y:{suggestedMin:70,suggestedMax:76,ticks:{color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
+                x:{ticks:{color:'#8a7d63',font:{size:11}},grid:{display:false}}}}});
+    }
+    // 週次トレ回数
+    var weekMap={};
+    Object.keys(ENTRIES).forEach(function(k){
+      var e=ENTRIES[k]; var mk=ymd(mondayOf(e.date));
+      var cnt=0; ['朝トレ','夕トレ','夜トレ'].forEach(function(s){
+        var c=e.blocks[s]; if(c&&c.replace(/[-*\s　・]/g,'')!=='なし'&&c!=='') cnt++;
+      });
+      weekMap[mk]=(weekMap[mk]||0)+cnt;
+    });
+    var weeks=Object.keys(weekMap).map(function(k){return {k:k,d:new Date(k),v:weekMap[k]};}).sort(function(a,b){return a.d-b.d;});
+    var tl=weeks.map(function(w){return (w.d.getMonth()+1)+'/'+w.d.getDate()+'週';});
+    var tv=weeks.map(function(w){return w.v;});
+    if(tChart)tChart.destroy();
+    var tc=document.getElementById('tchart');
+    if(tc){ tChart=new Chart(tc,{type:'bar',
+      data:{labels:tl,datasets:[{label:'トレ回数',data:tv,backgroundColor:'#3AABA8'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
+                x:{ticks:{color:'#8a7d63',font:{size:11}},grid:{display:false}}}}});
+    }
+  }
+
+  function bindNav(){
+    var p=document.getElementById('prevW'),n=document.getElementById('nextW');
+    if(p)p.onclick=function(){curMon.setDate(curMon.getDate()-7);renderWeek();};
+    if(n)n.onclick=function(){curMon.setDate(curMon.getDate()+7);renderWeek();};
+  }
+  function renderWeek(){
+    toc.style.display='none'; content.className='';
+    content.innerHTML=renderCalendar();
+    bindNav(); drawCharts(); window.scrollTo(0,0);
   }
   function renderMd(which){
-    var md = which==='log'? srcLog : srcIns;
-    content.className='md';
-    content.innerHTML = marked.parse(md);
+    var md=which==='log'?srcLog:srcIns; content.className='md'; content.innerHTML=marked.parse(md);
     toc.innerHTML='';
-    if(which==='insights'){
-      var hs=content.querySelectorAll('h3');
-      if(hs.length){
-        var html='<div class="toc-h">目次（タップで移動）</div>';
-        hs.forEach(function(h,i){ var id='q'+i; h.id=id; html+='<a href="#'+id+'">'+h.textContent+'</a>'; });
-        toc.innerHTML=html; toc.style.display='block';
-      }
-    } else { toc.style.display='none'; }
+    if(which==='insights'){var hs=content.querySelectorAll('h3');
+      if(hs.length){var html='<div class="toc-h">目次（タップで移動）</div>';
+        hs.forEach(function(h,i){var id='q'+i;h.id=id;html+='<a href="#'+id+'">'+h.textContent+'</a>';});
+        toc.innerHTML=html;toc.style.display='block';}}
+    else toc.style.display='none';
     window.scrollTo(0,0);
   }
-  function render(which){
-    if(which==='week'){ content.className=''; renderWeek(); }
-    else renderMd(which);
-  }
+  function render(which){ if(which==='week')renderWeek(); else renderMd(which); }
   document.querySelectorAll('.tab').forEach(function(b){
-    b.onclick=function(){ document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')}); b.classList.add('active'); render(b.dataset.t); };
+    b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
   });
-  document.getElementById('built').textContent='ページ生成: 2026-06-21 02:21 UTC';
+  document.getElementById('built').textContent='ページ生成: 2026-06-21 02:37 UTC';
 })();
 </script>
 </body>
