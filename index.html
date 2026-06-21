@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v1.6</title>
+<title>Fitness Viewer v1.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -22,7 +22,7 @@
   #pin:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(58,171,168,.18)}
   #gateBtn{background:var(--accent); color:#fff; border:none; font-weight:700; padding:12px 30px; border-radius:12px; font-size:15px; cursor:pointer;}
   #gateErr{color:#c0392b; font-size:13px; min-height:18px; margin:0}
-  #app{display:none; max-width:1080px; margin:0 auto; min-height:100vh; background:var(--bg)}
+  #app{display:none; max-width:1400px; margin:0 auto; min-height:100vh; background:var(--bg)}
   header.top{position:sticky; top:0; z-index:30; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px 0; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
   .ttl{display:flex; align-items:baseline; gap:6px; flex:0 0 auto}
   .ttl b{font-size:14px}
@@ -58,12 +58,12 @@
   .calwrap{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; overflow-x:auto; margin-bottom:24px}
   table.cal{border-collapse:collapse; width:100%; table-layout:fixed}
   table.cal th,table.cal td{border:1px solid var(--line); vertical-align:top}
-  table.cal thead th{background:var(--thead); color:#7a4a08; font-size:12px; padding:4px 3px; text-align:center; position:sticky; top:0; line-height:1.3}
-  table.cal th.sec,table.cal td.sec{width:62px; background:var(--bg2); font-weight:800; font-size:12px; text-align:center; vertical-align:middle; position:sticky; left:0; z-index:2; color:#5a4a2e}
+  table.cal thead th{background:var(--thead); color:#7a4a08; font-size:13.5px; padding:8px 5px; text-align:center; position:sticky; top:0; line-height:1.35}
+  table.cal th.sec,table.cal td.sec{width:78px; background:var(--bg2); font-weight:800; font-size:13px; text-align:center; vertical-align:middle; position:sticky; left:0; z-index:2; color:#5a4a2e}
   table.cal thead th.sec{z-index:3}
   table.cal th.today,table.cal td.today{background:var(--today)}
   table.cal thead th.today{box-shadow:inset 0 -3px 0 var(--accent2)}
-  .cell{font-size:12px; line-height:1.5; padding:5px 6px; max-height:92px; overflow:auto}
+  .cell{font-size:13px; line-height:1.6; padding:9px 10px; max-height:210px; overflow:auto}
   .cell ul{margin:2px 0; padding-left:15px}
   .cell li{margin:1px 0}
   .cell strong{color:#1f2a30}
@@ -85,7 +85,7 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v1.6</p>
+  <p style="opacity:.45">v1.7</p>
 </div>
 
 <div id="app">
@@ -696,7 +696,7 @@
   document.querySelectorAll('.tab').forEach(function(b){
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
   });
-  document.getElementById('built').textContent='ページ生成: 2026-06-21 04:00 UTC';
+  document.getElementById('built').textContent='ページ生成: 2026-06-21 04:03 UTC';
 })();
 </script>
 </body>
