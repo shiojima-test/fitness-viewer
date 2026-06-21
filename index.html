@@ -4,81 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v1.1</title>
+<title>Fitness Viewer v1.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <style>
   :root{
-    --bg:#F5E4C4;          /* クリーム背景 */
-    --bg2:#efdcb6;         /* 一段濃いクリーム */
-    --card:#fffaf0;        /* カード（ほぼ白に近いクリーム） */
-    --line:#e0cfa6;        /* 罫線 */
-    --text:#2d3439;        /* 本文（ダークグレー） */
-    --muted:#8a7d63;       /* 補足（くすんだ茶） */
-    --accent:#3AABA8;      /* ティール */
-    --accent2:#E88A0A;     /* オレンジ */
-    --thead:#fbe8c9;       /* 表ヘッダ背景 */
+    --bg:#F5E4C4; --bg2:#efdcb6; --card:#fffaf0; --line:#e0cfa6;
+    --text:#2d3439; --muted:#8a7d63; --accent:#3AABA8; --accent2:#E88A0A; --thead:#fbe8c9;
+    --ok:#2e9e6b; --none:#a99a7d; --miss:#d98324;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:"Meiryo","メイリオ",sans-serif; line-height:1.75; font-size:15px;
-  }
-  /* PINゲート */
-  #gate{
-    position:fixed; inset:0; background:var(--bg); z-index:100;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;
-  }
-  #gate h1{font-size:18px; margin:0; color:var(--text); font-weight:700}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:"Meiryo","メイリオ",sans-serif; line-height:1.75; font-size:15px;}
+  #gate{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;}
+  #gate h1{font-size:18px; margin:0; font-weight:700}
   #gate p{margin:0; color:var(--muted); font-size:13px; text-align:center}
-  #pin{
-    width:184px; text-align:center; font-size:30px; letter-spacing:14px;
-    padding:12px 0 12px 14px; border-radius:12px; border:1px solid var(--line);
-    background:var(--card); color:var(--text); outline:none;
-  }
+  #pin{width:184px; text-align:center; font-size:30px; letter-spacing:14px; padding:12px 0 12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--text); outline:none;}
   #pin:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(58,171,168,.18)}
-  #gateBtn{
-    background:var(--accent); color:#fff; border:none; font-weight:700;
-    padding:12px 30px; border-radius:12px; font-size:15px; cursor:pointer;
-  }
-  #gateBtn:active{filter:brightness(.95)}
+  #gateBtn{background:var(--accent); color:#fff; border:none; font-weight:700; padding:12px 30px; border-radius:12px; font-size:15px; cursor:pointer;}
   #gateErr{color:#c0392b; font-size:13px; min-height:18px; margin:0}
-  /* 本体 */
   #app{display:none; max-width:900px; margin:0 auto; min-height:100vh; background:var(--bg)}
-  header.top{
-    position:sticky; top:0; z-index:20; background:var(--bg);
-    border-bottom:1px solid var(--line); padding:16px 22px 0;
-  }
+  header.top{position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:1px solid var(--line); padding:16px 22px 0;}
   .ttl{display:flex; align-items:baseline; gap:10px; margin-bottom:12px}
   .ttl b{font-size:18px}
   .ttl span{font-size:11px; color:var(--muted)}
-  .tabs{display:flex; gap:10px}
-  .tab{
-    flex:1; max-width:200px; text-align:center; padding:11px 0; border:none; cursor:pointer;
-    background:transparent; color:var(--muted); font-size:14px; font-weight:700;
-    border-bottom:3px solid transparent; font-family:inherit;
-  }
+  .tabs{display:flex; gap:8px}
+  .tab{flex:1; max-width:180px; text-align:center; padding:11px 4px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-size:13.5px; font-weight:700; border-bottom:3px solid transparent; font-family:inherit;}
   .tab.active{color:var(--text); border-bottom-color:var(--accent)}
-  main{padding:22px; }
+  main{padding:22px}
   @media(min-width:760px){ main{padding:30px 40px} }
-  /* 目次 */
-  #toc{
-    background:var(--card); border:1px solid var(--line); border-radius:14px;
-    padding:14px 18px; margin-bottom:22px; box-shadow:0 1px 3px rgba(120,90,30,.06);
-  }
+  #toc{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:22px; box-shadow:0 1px 3px rgba(120,90,30,.06);}
   #toc .toc-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:8px; letter-spacing:.05em}
   #toc a{display:block; color:var(--text); text-decoration:none; font-size:13px; padding:5px 0; border-bottom:1px dashed var(--line)}
   #toc a:last-child{border-bottom:none}
-  #toc a:active{color:var(--accent)}
   /* markdown */
   .md{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(120,90,30,.06)}
   @media(min-width:760px){ .md{padding:28px 32px} }
   .md h1{font-size:21px; border-bottom:2px solid var(--line); padding-bottom:10px; margin:4px 0 18px}
   .md h2{font-size:17px; color:#1f7f7d; margin:28px 0 12px; border-left:4px solid var(--accent); padding-left:11px}
-  .md h3{font-size:15.5px; margin:24px 0 8px; color:var(--text); scroll-margin-top:130px; font-weight:700}
-  .md blockquote{
-    margin:14px 0; padding:10px 16px; background:var(--bg2);
-    border-left:3px solid var(--accent2); color:var(--muted); font-size:13px; border-radius:0 10px 10px 0;
-  }
+  .md h3{font-size:15.5px; margin:24px 0 8px; scroll-margin-top:130px; font-weight:700}
+  .md blockquote{margin:14px 0; padding:10px 16px; background:var(--bg2); border-left:3px solid var(--accent2); color:var(--muted); font-size:13px; border-radius:0 10px 10px 0;}
   .md table{border-collapse:collapse; width:100%; font-size:12.5px; margin:14px 0; display:block; overflow-x:auto}
   .md th,.md td{border:1px solid var(--line); padding:7px 10px; text-align:left; white-space:nowrap}
   .md th{background:var(--thead); color:#b5680a; font-weight:700}
@@ -88,6 +51,21 @@
   .md strong{color:#1f2a30}
   .md code{background:var(--bg2); padding:1px 6px; border-radius:6px; font-size:12px; color:#9a5a00}
   .md a{color:var(--accent)}
+  /* 週まとめ表 */
+  .weekwrap{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 1px 3px rgba(120,90,30,.06); overflow-x:auto}
+  .weekttl{font-size:15px; font-weight:800; margin:2px 0 12px}
+  table.week{border-collapse:collapse; font-size:13px; width:100%; min-width:560px}
+  table.week th,table.week td{border:1px solid var(--line); padding:8px 6px; text-align:center; white-space:nowrap}
+  table.week thead th{background:var(--thead); color:#b5680a; font-weight:700; position:sticky; top:0}
+  table.week td.day,table.week th.day{position:sticky; left:0; background:var(--bg2); font-weight:700; text-align:left; z-index:1}
+  table.week tbody tr:nth-child(even) td:not(.day){background:#fffdf8}
+  .sym{font-size:15px; font-weight:800}
+  .sym.done{color:var(--ok)}
+  .sym.none{color:var(--none)}
+  .sym.miss{color:var(--miss)}
+  td.wt{font-weight:700; color:#1f2a30}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; font-size:12px; color:var(--muted)}
+  .legend b{font-weight:800}
   .updated{color:var(--muted); font-size:11px; text-align:right; margin-top:28px}
 </style>
 </head>
@@ -99,20 +77,21 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v1.1</p>
+  <p style="opacity:.45">v1.2</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v1.1</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v1.2</span></div>
     <div class="tabs">
-      <button class="tab active" data-t="log">記録</button>
+      <button class="tab active" data-t="week">週まとめ</button>
+      <button class="tab" data-t="log">記録</button>
       <button class="tab" data-t="insights">知の財産</button>
     </div>
   </header>
   <main>
     <div id="toc"></div>
-    <div id="content" class="md"></div>
+    <div id="content"></div>
     <div class="updated" id="built"></div>
   </main>
 </div>
@@ -120,7 +99,35 @@
 <script type="text/plain" id="src-log"># デイリーログ（フィットネス記録）
 
 ※新しい日を上に追記。手帳と同じ並びで記入。
-※記入フォーマット：体重(夜) / ラン / 筋トレ / 食事・サプリ / 効果 / 所感
+※記入フォーマット（7ブロック固定）：### 朝トレ ／ ### 朝食 ／ ### 昼食 ／ ### 夕トレ ／ ### 夕食 ／ ### 夜トレ ／ ### 体重 の順。
+※各ブロックは空でも見出しを残す。未実施は「なし」と記入、空欄は「未記録」扱い（リマインダー・週まとめ表が判定に使用）。
+
+---
+
+## ▼ 06/21（日）
+
+### 朝トレ
+- **自重（機能的筋力トレーニング）7:12–7:45 / 33分18秒 / 平均HR72 / 91kcal（合計153）**
+  - 腕立てワイド 20×5（胸）／腕立てナロー 20×5（三頭）
+  - ※本来は夜だった自重パートを朝に前出し（就寝直前トレ回避＝Q4-1）
+- **Z2ラン（屋外）7:51–8:16 / 4.23km / 5'46"/km / 平均HR144 / 326kcal（合計371）/ ケイデンス160spm / 上昇16m**
+  - **平均HR144＝Z2上限にぴったり収まり狙い通り**。1km目134→以降146〜148で安定、垂れず巡航。直近の慢性Z3寄りを是正
+  - ペース据え置きで心拍低下＝持久力向上が数字でZ2域に到達
+- トレ前サプリ：**クアン**（腕立て前）
+
+### 朝食
+- ラン後：**ティゴラ30g（P26.4g）＋クレアチン**（出張前も継続再充填中）
+- ※固形朝食の内容は未報告
+
+### 昼食
+
+### 夕トレ
+
+### 夕食
+
+### 夜トレ
+
+### 体重
 
 ---
 
@@ -460,20 +467,10 @@
   var PIN="0000";
   var gate=document.getElementById('gate'),app=document.getElementById('app');
   var pin=document.getElementById('pin'),err=document.getElementById('gateErr');
-  function unlock(){
-    gate.style.display='none'; app.style.display='block';
-    try{localStorage.setItem('fv_ok','1')}catch(e){}
-    render('log');
-  }
-  function tryPin(){
-    if(pin.value===PIN){unlock();}
-    else{err.textContent='PINが違います'; pin.value=''; pin.focus();}
-  }
+  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} render('week'); }
+  function tryPin(){ if(pin.value===PIN){unlock();} else {err.textContent='PINが違います'; pin.value=''; pin.focus();} }
   document.getElementById('gateBtn').onclick=tryPin;
-  pin.addEventListener('keyup',function(e){
-    if(pin.value.length===4 && pin.value===PIN){unlock();}
-    if(e.key==='Enter') tryPin();
-  });
+  pin.addEventListener('keyup',function(e){ if(pin.value.length===4 && pin.value===PIN){unlock();} if(e.key==='Enter') tryPin(); });
   try{ if(localStorage.getItem('fv_ok')==='1'){ unlock(); } else { pin.focus(); } }catch(e){ pin.focus(); }
 
   var srcLog=document.getElementById('src-log').textContent;
@@ -481,8 +478,86 @@
   var content=document.getElementById('content'), toc=document.getElementById('toc');
   marked.setOptions({gfm:true, breaks:false});
 
-  function render(which){
+  var BLOCKS=['朝トレ','朝食','昼食','夕トレ','夕食','夜トレ'];
+
+  function parseDays(md){
+    var re=/##\s*▼\s*([^\n]+)/g, m, marks=[];
+    while((m=re.exec(md))){ marks.push({label:m[1].trim(), idx:m.index}); }
+    var days=[];
+    for(var i=0;i<marks.length;i++){
+      var end = (i+1<marks.length)? marks[i+1].idx : md.length;
+      days.push({label:marks[i].label, text:md.slice(marks[i].idx, end)});
+    }
+    return days;
+  }
+  function blocksOf(dayText){
+    var map={}, cur=null, buf=[];
+    var lines=dayText.split('\n');
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i];
+      var hm=line.match(/^###\s+(.+?)\s*$/);
+      if(hm){ if(cur!==null) map[cur]=buf.join('\n').trim(); cur=hm[1].trim(); buf=[]; }
+      else if(cur!==null){
+        if(/^##\s/.test(line) || /^---\s*$/.test(line)){ map[cur]=buf.join('\n').trim(); cur=null; buf=[]; }
+        else buf.push(line);
+      }
+    }
+    if(cur!==null) map[cur]=buf.join('\n').trim();
+    return map;
+  }
+  function blockContent(bm, name){ return (name in bm)? bm[name] : null; }
+  function statusSym(content){
+    if(content===null||content==='') return {s:'×', c:'miss'};
+    var plain=content.replace(/[-*\s　・]/g,'');
+    if(plain==='なし'||plain.indexOf('なし')===0 && plain.length<=4) return {s:'—', c:'none'};
+    return {s:'○', c:'done'};
+  }
+  function weightVal(content){
+    if(!content) return '';
+    var m=content.match(/夜\s*\*?\*?\s*(\d{2,3}(?:\.\d)?)\s*kg/);
+    if(m) return m[1];
+    var m2=content.match(/(\d{2,3}(?:\.\d)?)\s*kg/);
+    return m2? m2[1] : '○';
+  }
+  function shortDay(label){
+    // "06/21（日）" -> "6/21(日)"
+    var m=label.match(/(\d{1,2})\/(\d{1,2}).*?[（(]?\s*(.)?\s*[）)]?/);
+    var t=label.replace(/[（）]/g,function(c){return c==='（'?'(':')';});
+    t=t.replace(/^0/,'').replace('/0','/');
+    return t;
+  }
+
+  function renderWeek(){
+    toc.style.display='none';
+    var days=parseDays(srcLog).slice(0,7); // 最新7日
+    var rows='';
+    days.forEach(function(d){
+      var bm=blocksOf(d.text);
+      var tds='<td class="day">'+shortDay(d.label)+'</td>';
+      BLOCKS.forEach(function(b){
+        var st=statusSym(blockContent(bm,b));
+        tds+='<td><span class="sym '+st.c+'">'+st.s+'</span></td>';
+      });
+      var w=weightVal(blockContent(bm,'体重'));
+      tds+='<td class="wt">'+(w||'<span class="sym miss">×</span>')+'</td>';
+      rows+='<tr>'+tds+'</tr>';
+    });
+    var head='<th class="day">日</th>';
+    BLOCKS.forEach(function(b){ head+='<th>'+b+'</th>'; });
+    head+='<th>体重</th>';
+    content.innerHTML =
+      '<div class="weekwrap">'+
+      '<div class="weekttl">直近7日サマリー</div>'+
+      '<table class="week"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="legend"><span><b style="color:var(--ok)">○</b> 記録あり</span>'+
+      '<span><b style="color:var(--none)">—</b> なし(未実施)</span>'+
+      '<span><b style="color:var(--miss)">×</b> 未記録</span>'+
+      '<span>体重列＝夜kg</span></div></div>';
+    window.scrollTo(0,0);
+  }
+  function renderMd(which){
     var md = which==='log'? srcLog : srcIns;
+    content.className='md';
     content.innerHTML = marked.parse(md);
     toc.innerHTML='';
     if(which==='insights'){
@@ -495,13 +570,14 @@
     } else { toc.style.display='none'; }
     window.scrollTo(0,0);
   }
+  function render(which){
+    if(which==='week'){ content.className=''; renderWeek(); }
+    else renderMd(which);
+  }
   document.querySelectorAll('.tab').forEach(function(b){
-    b.onclick=function(){
-      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
-      b.classList.add('active'); render(b.dataset.t);
-    };
+    b.onclick=function(){ document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')}); b.classList.add('active'); render(b.dataset.t); };
   });
-  document.getElementById('built').textContent='ページ生成: 2026-06-21 01:24 UTC';
+  document.getElementById('built').textContent='ページ生成: 2026-06-21 02:21 UTC';
 })();
 </script>
 </body>
