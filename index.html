@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.2</title>
+<title>Fitness Viewer v3.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -129,12 +129,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.2</p>
+  <p style="opacity:.45">v3.3</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.2</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.3</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -787,7 +787,7 @@
       var dt=new Date(curMon); dt.setDate(dt.getDate()+i);
       var e=ENTRIES[ymd(dt)]; if(!e) continue; any=true;
       var isT=(ymd(dt)===tkey);
-      html+='<section class="mday'+(isT?' tday':'')+'">';
+      html+='<section'+(isT?' id="mtoday"':'')+' class="mday'+(isT?' tday':'')+'">';
       html+='<div class="mdate">'+(dt.getMonth()+1)+'/'+dt.getDate()+'（'+WD[i]+'）'+(isT?'<span class="tbadge">今日</span>':'')+'</div>';
       SECTIONS.forEach(function(sec){
         var c=e.blocks[sec];
@@ -857,8 +857,13 @@
   }
   function renderWeek(){
     toc.style.display='none'; content.className='';
-    content.innerHTML=(window.innerWidth<=640?renderMobile():renderCalendar());
+    var mob=window.innerWidth<=640;
+    content.innerHTML=(mob?renderMobile():renderCalendar());
     bindNav(); window.scrollTo(0,0);
+    if(mob){
+      var tc=document.getElementById('mtoday'), ml=content.querySelector('.mlist');
+      if(tc&&ml){ ml.scrollTop = tc.getBoundingClientRect().top - ml.getBoundingClientRect().top + ml.scrollTop; }
+    }
   }
   function renderMd(which){
     var md=which==='log'?srcLog:srcIns; content.className='md'; content.innerHTML=marked.parse(md);
