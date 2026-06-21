@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Fitness Review v1.0</title>
+<style>
+  :root{
+    --bg:#F5E4C4; --bg2:#efdcb6; --card:#fffaf0; --line:#e0cfa6;
+    --text:#2d3439; --muted:#8a7d63; --accent:#3AABA8; --accent2:#E88A0A; --thead:#fbe8c9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:"Meiryo","メイリオ",sans-serif; line-height:1.7; font-size:15px;}
+  #gate{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;}
+  #gate h1{margin:0; font-size:20px}
+  #gate input{font-size:22px; letter-spacing:.5em; text-align:center; width:160px; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  #gate button{font-size:16px; padding:10px 26px; border:0; border-radius:10px; background:var(--accent); color:#fff; cursor:pointer;}
+  #gateErr{color:#c0392b; min-height:1.2em; margin:0; font-size:13px}
+  .ver{opacity:.45; font-size:12px; margin:0}
+  #app{display:none; max-width:760px; margin:0 auto; padding:0 14px 60px;}
+  header.top{position:sticky; top:0; background:var(--bg); padding:14px 2px 10px; border-bottom:2px solid var(--accent2); display:flex; align-items:baseline; justify-content:space-between;}
+  header.top .ttl b{font-size:18px}
+  header.top .ttl span{font-size:12px; color:var(--muted); margin-left:8px}
+  header.top a{font-size:12px; color:var(--accent); text-decoration:none}
+  .md h1{font-size:16px; color:var(--muted); font-weight:normal; margin:18px 0 6px}
+  .md h2{font-size:16px; color:#fff; background:var(--accent); padding:8px 12px; border-radius:8px; margin:26px 0 14px;}
+  .md h3{font-size:15px; margin:18px 0 8px; padding-left:10px; border-left:4px solid var(--accent2);}
+  .md ul{margin:6px 0 10px; padding-left:20px}
+  .md li{margin:4px 0}
+  .md p{margin:6px 0; color:var(--muted)}
+  .md strong{color:var(--text)}
+  .md hr{border:0; border-top:1px solid var(--line); margin:18px 0}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:6px 16px 16px; margin-top:14px;}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h1>Fitness Review</h1>
+  <p>4桁のPINを入力してください</p>
+  <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
+  <button id="gateBtn">ひらく</button>
+  <p id="gateErr"></p>
+  <p class="ver">v1.0</p>
+</div>
+
+<div id="app">
+  <header class="top">
+    <div class="ttl"><b>Fitness Review</b><span>v1.0</span></div>
+    <a href="./">← Viewer</a>
+  </header>
+  <div class="card"><div id="content" class="md"></div></div>
+</div>
+
+<script type="text/plain" id="src-review">
+# フィットネス日次総評（review）
+
+※log.md（事実＋セクション別評価）とinsights.md（普遍Q&A）に対し、本ファイルは「その日の俯瞰レビュー」を蓄積する正本。新しい順。
+
+---
+
+## ▼ 06/21（日）
+
+### 食事総評（72/100）
+- トレ日として合格、攻めの減量日としては及第点。守りは○、弱点は脂質。
+- **タンパク質：約138〜148g / 150g**（アクアで底上げして死守、ほぼ達成）
+- 脂質：推定70〜85gで目標超過寄り。カロリーも維持寄り＝今日は赤字が薄い日。
+- 良かった配置：昼に糖質→トレ前クアン→トレ後アシッド→カロリミットを最大食に集中→トレ日禁酒。教科書通り。
+- 次に活かす1点：揚げ物が重なる日は一品を非揚げのP源（冷奴/刺身/サラダチキン）に替えると脂質を抑えつつ食品Pが上がる。
+
+### トレ総評（80/100）
+- パターンB＋ブルガリアンスクワット（6/20と同一・重量回数とも同じ）。トレ前クアン／トレ後アシッド28g。
+- 効果：全身刺激を再現、ロイシンでmTOR起動。昼糖質で筋グリコーゲンの土台があり後半垂れにくい。
+- 漸進性過負荷：なし（前回と同一）。トライセプスエクステンションは見送り＝三頭の直接刺激が未充填。
+- 次の一手：次回は漸進を一点（重量↑/回数↑等）＋トライセプスエクステンション10kg×12×3を最後に追加。
+
+### 翌日への一手
+- 出張1日目＝維持モード。Pと睡眠を死守すれば下げ基調は崩れない。
+- 朝は固形＋プロテインでPを多めに確保し、夜の揚げ物偏重を繰り返さない。
+
+---
+</script>
+
+<script>
+  // ---- PIN gate (0000) ----
+  var PIN="0000", KEY="frev_ok";
+  function open_(){ document.getElementById('gate').style.display='none'; document.getElementById('app').style.display='block'; render(); }
+  if(localStorage.getItem(KEY)==='1'){ open_(); }
+  function tryOpen(){
+    var v=document.getElementById('pin').value;
+    if(v===PIN){ localStorage.setItem(KEY,'1'); open_(); }
+    else{ document.getElementById('gateErr').textContent='PINが違います'; }
+  }
+  document.getElementById('gateBtn').addEventListener('click', tryOpen);
+  document.getElementById('pin').addEventListener('keydown', function(e){ if(e.key==='Enter') tryOpen(); });
+
+  // ---- minimal markdown renderer (subset: h1-3, ul(-), strong**, hr---, p) ----
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function inline(s){ return esc(s).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); }
+  function render(){
+    var src=document.getElementById('src-review').textContent.replace(/^\n/,'');
+    var lines=src.split('\n'), out=[], inUl=false;
+    function closeUl(){ if(inUl){ out.push('</ul>'); inUl=false; } }
+    for(var i=0;i<lines.length;i++){
+      var ln=lines[i].replace(/\s+$/,'');
+      if(/^### /.test(ln)){ closeUl(); out.push('<h3>'+inline(ln.slice(4))+'</h3>'); }
+      else if(/^## /.test(ln)){ closeUl(); out.push('<h2>'+inline(ln.slice(3))+'</h2>'); }
+      else if(/^# /.test(ln)){ closeUl(); out.push('<h1>'+inline(ln.slice(2))+'</h1>'); }
+      else if(/^---\s*$/.test(ln)){ closeUl(); out.push('<hr>'); }
+      else if(/^- /.test(ln)){ if(!inUl){ out.push('<ul>'); inUl=true; } out.push('<li>'+inline(ln.slice(2))+'</li>'); }
+      else if(ln===''){ closeUl(); }
+      else { closeUl(); out.push('<p>'+inline(ln)+'</p>'); }
+    }
+    closeUl();
+    document.getElementById('content').innerHTML=out.join('\n');
+  }
+</script>
+</body>
+</html>
