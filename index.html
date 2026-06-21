@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v2.3</title>
+<title>Fitness Viewer v2.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -86,12 +86,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v2.3</p>
+  <p style="opacity:.45">v2.4</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v2.3</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v2.4</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -539,7 +539,7 @@
   function tryPin(){ if(pin.value===PIN){unlock();} else {err.textContent='PINが違います'; pin.value=''; pin.focus();} }
   document.getElementById('gateBtn').onclick=tryPin;
   pin.addEventListener('keyup',function(e){ if(pin.value.length===4 && pin.value===PIN){unlock();} if(e.key==='Enter') tryPin(); });
-  try{ if(localStorage.getItem('fv_ok')==='1'){ unlock(); } else { pin.focus(); } }catch(e){ pin.focus(); }
+  try{ if(localStorage.getItem('fv_ok')!=='1'){ pin.focus(); } }catch(e){ pin.focus(); }
 
   var srcLog=document.getElementById('src-log').textContent;
   var srcIns=document.getElementById('src-insights').textContent;
@@ -719,6 +719,8 @@
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
   });
   document.getElementById('built').textContent='ページ生成: 2026-06-21 04:28 UTC';
+  // 全初期化後に自動アンロック＆初回描画（初期化順バグ対策）
+  try{ if(localStorage.getItem('fv_ok')==='1'){ unlock(); } }catch(e){}
 })();
 </script>
 </body>
