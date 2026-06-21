@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.1</title>
+<title>Fitness Viewer v3.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -101,7 +101,7 @@
   /* ---- スマホ(<=640px) 週表示：日付ごと縦リスト／日付ヘッダを上部固定／各行にセクション名を併記 ---- */
   @media(max-width:640px){
     body.calfix{height:100dvh; overflow:hidden}
-    body.calfix #app{height:100dvh; min-height:0; overflow:hidden; display:flex; flex-direction:column}
+    body.calfix #app{height:100dvh; min-height:0; overflow:hidden; display:flex !important; flex-direction:column}
     body.calfix header.top{flex:0 0 auto}
     body.calfix main{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:8px}
     body.calfix #content{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden}
@@ -129,12 +129,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.1</p>
+  <p style="opacity:.45">v3.2</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.1</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.2</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
