@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.22</title>
+<title>Fitness Viewer v3.23</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -55,18 +55,22 @@
   .evcard.is-done .evbadge{background:var(--none)}
   .ev-empty{color:var(--muted); text-align:center; padding:30px 0}
   .evplan{margin-top:14px; border-top:1px dashed var(--line); padding-top:12px}
-  .evplan .pl-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:8px}
-  .plrow{display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; background:#fffdf8}
-  .plrow .pl-d{flex:0 0 92px; font-weight:800; font-size:13px; color:#5a4a2e}
-  .plrow .pl-now{display:inline-block; background:var(--accent); color:#fff; font-size:9px; font-weight:700; padding:0 5px; border-radius:8px; margin-left:5px; vertical-align:middle}
-  .plrow .pl-tr{flex:0 0 132px; font-size:12.5px; font-weight:700; color:var(--text)}
-  .plrow .pl-m{flex:1 1 auto; min-width:0; font-size:11.5px; color:var(--muted)}
-  .plrow .pl-w{flex:0 0 auto; font-size:12px; font-weight:800; color:var(--accent); min-width:48px; text-align:right}
-  .plrow .pl-w.pl-no{color:var(--miss)}
-  .plrow.is-today{border-color:var(--accent); background:var(--today)}
-  .plrow.is-past{opacity:.5}
-  .plrow.is-evt{border-left:4px solid var(--accent2); background:#fff4e3}
-  @media(max-width:560px){ .plrow{flex-wrap:wrap} .plrow .pl-tr{flex-basis:auto} .plrow .pl-m{flex-basis:100%; order:3} }
+  .evplan .pl-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:10px}
+  .plday{border:1px solid var(--line); border-radius:11px; margin-top:8px; background:#fffdf8; overflow:hidden}
+  .plday .pld-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--bg2); padding:7px 12px; border-bottom:1px solid var(--line)}
+  .plday .pld-t{font-weight:800; font-size:13px; color:#5a4a2e; flex:1 1 auto}
+  .plday .pl-now{background:var(--accent); color:#fff; font-size:9px; font-weight:700; padding:1px 6px; border-radius:8px}
+  .plday .pl-w{font-size:11px; font-weight:800; color:var(--accent); background:#eaf6f5; padding:1px 8px; border-radius:8px}
+  .plday .pl-w.pl-no{color:var(--miss); background:#f3ecda}
+  .plday .pld-b{padding:8px 13px 11px}
+  .plday .pld-b ul{margin:0; padding-left:18px}
+  .plday .pld-b li{margin:3px 0; font-size:12.5px; line-height:1.6}
+  .plday .pld-b strong{color:#b5680a}
+  .plday.is-today{border-color:var(--accent)}
+  .plday.is-today .pld-h{background:var(--today)}
+  .plday.is-past{opacity:.55}
+  .plday.is-evt{border-left:5px solid var(--accent2)}
+  .plday.is-evt .pld-h{background:#fff4e3} .plrow .pl-tr{flex-basis:auto} .plrow .pl-m{flex-basis:100%; order:3} }
   main{padding:12px 16px}
   @media(min-width:760px){ main{padding:12px 32px} }
   #toc{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:22px;}
@@ -174,12 +178,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.22</p>
+  <p style="opacity:.45">v3.23</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.22</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.23</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -1255,7 +1259,7 @@
   var pin=document.getElementById('pin'),err=document.getElementById('gateErr');
   function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} render('week'); }
   function renderEventsTab(){
-    // log から日付→体重 のマップを作る（実績が入った日だけ体重が出る）
+    // log から日付→体重 マップ
     var wmap={};
     srcLog.split(/\n##\s*▼\s*/).slice(1).forEach(function(b){
       var head=b.split('\n')[0];
@@ -1269,26 +1273,28 @@
     var wdn=['日','月','火','水','木','金','土'];
     var items=[];
     blocks.forEach(function(b){
-      var lines=b.split('\n');
-      var title=lines[0].trim();
-      var md=b.match(/date:\s*(\d{4})-(\d{2})-(\d{2})/);
-      if(!md) return;
+      var title=b.split('\n')[0].trim();
+      var md=b.match(/date:\s*(\d{4})-(\d{2})-(\d{2})/); if(!md) return;
       var d=new Date(+md[1], +md[2]-1, +md[3]); d.setHours(0,0,0,0);
       var st=(b.match(/status:\s*(\w+)/)||[])[1]||'open';
       var tm=(b.match(/time:\s*([0-9:]+)/)||[])[1]||'';
       var days=Math.round((d-today)/86400000);
-      // 日別プランを抽出
-      var plans=[];
-      lines.forEach(function(l){
-        var pm=l.match(/^-\s*plan:\s*(\d{4})-(\d{2})-(\d{2})\s*\|([^|]*)\|(.*)$/);
-        if(pm){ var pd=new Date(+pm[1],+pm[2]-1,+pm[3]); pd.setHours(0,0,0,0);
-          plans.push({date:pd, tr:pm[4].trim(), memo:pm[5].trim()}); }
-      });
-      // 本文（メタ・plan行・日別プラン見出しを除去）
-      var body=lines.slice(1).filter(function(l){
-        return !/^\s*<!--/.test(l) && !/^-\s*plan:/.test(l) && !/日別プラン/.test(l);
-      }).join('\n').trim();
-      items.push({title:title,date:d,status:st,time:tm,days:days,body:body,plans:plans});
+      // 「### 日別プラン」で 上部本文 と 日別 を分離
+      var split=b.split(/###\s*日別プラン[^\n]*\n/);
+      var topRaw=split[0];
+      var topBody=topRaw.split('\n').slice(1).filter(function(l){ return !/^\s*<!--/.test(l); }).join('\n').trim();
+      var dayBlocks=[];
+      if(split[1]){
+        split[1].split(/####\s+/).slice(1).forEach(function(db){
+          var lines=db.split('\n');
+          var hm=lines[0].match(/(\d{4})-(\d{2})-(\d{2})/); if(!hm) return;
+          var dd=new Date(+hm[1],+hm[2]-1,+hm[3]); dd.setHours(0,0,0,0);
+          var label=lines[0].trim();
+          var dbody=lines.slice(1).join('\n').trim();
+          dayBlocks.push({date:dd, label:label, body:dbody});
+        });
+      }
+      items.push({title:title,date:d,status:st,time:tm,days:days,top:topBody,days_:dayBlocks});
     });
     items.sort(function(a,b){ var ao=a.status==='done'?1:0,bo=b.status==='done'?1:0; if(ao!==bo)return ao-bo; return a.date-b.date; });
 
@@ -1302,28 +1308,29 @@
       var when=mdLabel+'（'+wd+'）'+(x.time?(' '+x.time):'');
       var sub = done?('目標日 '+when+'（完了）') : x.days>0?('目標日 '+when+' まで あと'+x.days+'日') : x.days===0?('目標日 '+when+'（今日）') : ('目標日 '+when+' は過ぎました');
 
-      // 日別プランをカレンダー的な箇条書きで
+      // 日別の詳細カード
       var planHtml='';
-      if(x.plans.length){
-        var rows=x.plans.map(function(p){
+      if(x.days_.length){
+        var rows=x.days_.map(function(p){
           var pdays=Math.round((p.date-today)/86400000);
-          var rc='plrow', mark='';
-          if(pdays<0){ rc+=' is-past'; }
+          var rc='plday', mark='';
+          if(pdays<0) rc+=' is-past';
           else if(pdays===0){ rc+=' is-today'; mark='<span class="pl-now">今日</span>'; }
-          var isEvt=(p.date-x.date===0); if(isEvt) rc+=' is-evt';
+          if(p.date-x.date===0) rc+=' is-evt';
           var key=(p.date.getMonth()+1)+'-'+p.date.getDate();
           var w=wmap[key];
-          var wlabel = w?('<span class="pl-w">'+w+'kg</span>'):'<span class="pl-w pl-no">—</span>';
-          var dlabel=(p.date.getMonth()+1)+'/'+p.date.getDate()+'（'+wdn[p.date.getDay()]+'）';
-          return '<div class="'+rc+'"><div class="pl-d">'+dlabel+mark+'</div>'+
-                 '<div class="pl-tr">'+(p.tr||'')+'</div>'+
-                 '<div class="pl-m">'+(p.memo||'')+'</div>'+wlabel+'</div>';
+          var wlabel = w?('<span class="pl-w">体重 '+w+'kg</span>'):'<span class="pl-w pl-no">体重 —</span>';
+          // ラベルの日付以降のタイトル部分（YYYY-MM-DDを除く見やすい形）
+          var ttl=p.label.replace(/^\d{4}-\d{2}-\d{2}\s*/,'');
+          if(!/\d+\/\d+/.test(ttl)) ttl=(p.date.getMonth()+1)+'/'+p.date.getDate()+'（'+wdn[p.date.getDay()]+'） '+ttl;
+          return '<div class="'+rc+'"><div class="pld-h"><span class="pld-t">'+ttl+'</span>'+mark+wlabel+'</div>'+
+                 '<div class="pld-b">'+marked.parse(p.body)+'</div></div>';
         }).join('');
-        planHtml='<div class="evplan"><div class="pl-h">当日までの日別プラン（体重は記録が入った日に表示）</div>'+rows+'</div>';
+        planHtml='<div class="evplan"><div class="pl-h">当日までの日別プラン（体重は記録が入った日に自動表示）</div>'+rows+'</div>';
       }
       return '<div class="'+cls+'"><div class="evhd"><div class="evbadge">'+big+'</div>'+
              '<div><div class="evttl">'+x.title+'</div><div class="evwhen">'+sub+'</div></div></div>'+
-             '<div class="evbody">'+marked.parse(x.body)+'</div>'+planHtml+'</div>';
+             (x.top?('<div class="evbody">'+marked.parse(x.top)+'</div>'):'')+planHtml+'</div>';
     }).join('');
     content.className=''; content.innerHTML='<div id="events">'+(html2||'<div class="ev-empty">イベントはありません</div>')+'</div>';
     toc.style.display='none'; window.scrollTo(0,0);
