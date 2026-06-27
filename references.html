@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Nutrition References v1.0</title>
+<style>
+  :root{
+    --bg:#F5E4C4; --bg2:#efdcb6; --card:#fffaf0; --line:#e0cfa6;
+    --text:#2d3439; --muted:#8a7d63; --accent:#3AABA8; --accent2:#E88A0A; --thead:#fbe8c9;
+    --fat:#E88A0A; --carb:#3AABA8; --navy:#1a3a5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:"Meiryo","メイリオ",sans-serif; line-height:1.7; font-size:15px;}
+  #gate{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;}
+  #gate h1{margin:0; font-size:20px}
+  #gate input{font-size:22px; letter-spacing:.5em; text-align:center; width:160px; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  #gate button{font-size:16px; padding:10px 26px; border:0; border-radius:10px; background:var(--accent); color:#fff; cursor:pointer;}
+  #gateErr{color:#c0392b; min-height:1.2em; margin:0; font-size:13px}
+  .ver{opacity:.45; font-size:12px; margin:0}
+  #app{display:none; max-width:780px; margin:0 auto; padding:0 14px 70px;}
+  header.top{position:sticky; top:0; background:var(--bg); padding:14px 2px 8px; border-bottom:2px solid var(--accent2); display:flex; align-items:baseline; justify-content:space-between; z-index:10;}
+  header.top .ttl b{font-size:18px}
+  header.top .ttl span{font-size:12px; color:var(--muted); margin-left:8px}
+  header.top a{font-size:12px; color:var(--accent); text-decoration:none}
+  #nav{position:sticky; top:46px; background:var(--bg); padding:8px 0; display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; border-bottom:1px solid var(--line); z-index:9;}
+  #nav a{flex:0 0 auto; font-size:12px; text-decoration:none; color:var(--navy); background:#fff; border:1px solid var(--line); padding:5px 11px; border-radius:999px; white-space:nowrap;}
+  .intro{font-size:12.5px; color:var(--muted); margin:12px 2px 0; line-height:1.6}
+  .md h2{font-size:16px; color:#fff; background:var(--accent); padding:9px 13px; border-radius:8px; margin:30px 0 14px; scroll-margin-top:92px;}
+  .md h3{font-size:15px; margin:20px 0 8px; padding-left:10px; border-left:4px solid var(--accent2);}
+  .md h4{font-size:14px; margin:14px 0 4px; color:var(--navy);}
+  .md ul{margin:6px 0 10px; padding-left:20px}
+  .md li{margin:5px 0}
+  .md p{margin:6px 0; color:var(--muted)}
+  .md strong{color:var(--text)}
+  .md .note{background:#fff7e6; border-left:4px solid var(--accent2); padding:8px 12px; border-radius:0 8px 8px 0; color:var(--text); font-size:13.5px; margin:8px 0;}
+  .md hr{border:0; border-top:1px solid var(--line); margin:22px 0}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 16px 18px; margin-top:14px;}
+  figure.fig{margin:14px 0; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px;}
+  figure.fig svg{display:block; width:100%; height:auto;}
+  figure.fig figcaption{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5;}
+  .src{font-size:11px; color:#b3a589;}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h1>Nutrition References</h1>
+  <p>4桁のPINを入力してください</p>
+  <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
+  <button id="gateBtn">ひらく</button>
+  <p id="gateErr"></p>
+  <p class="ver">v1.0</p>
+</div>
+
+<div id="app">
+  <header class="top">
+    <div class="ttl"><b>Nutrition References</b><span>v1.0</span></div>
+    <a href="./">← Viewer</a>
+  </header>
+  <nav id="nav"></nav>
+  <p class="intro">食事・栄養の知識カタログ。Tarzan「太らない食べ方／オイルファースト」特集ほかの要点を自分の言葉で再構成（私的な学習メモ）。図版は元データをもとに独自に作成。</p>
+  <div class="card"><div id="content" class="md"></div></div>
+</div>
+
+<script type="text/plain" id="src-ref">
+## R1. 太らない食べ方の50ヶ条
+> 大原則は「知って」「意識する」こと。わずかな習慣の差が効く。
+
+### A. 食べ順
+- **01 野菜から（ベジファースト）**：食物繊維が糖の吸収を緩やかに。
+- **02 タンパク質を早めに（プロテインファースト）**：肉・魚を先に摂ると脂肪が燃えやすい高代謝モードに。
+- **04 スープ・汁物を最初に**：先に入れると後の消化・血糖が安定。
+- **05 糖質は最後に（カーボラスト）**：糖の吸収が緩やかに。
+- **31 1食に3色以上**：緑・赤＝野菜、茶＝タンパク質の目安。
+
+### B. 食べ方・噛み方・速度
+- **06 20分以上かけて食べる**：急な血糖上昇を避ける（少量なら5分でも可）。
+- **07 よく噛む（20〜30回）**／**08 3口ごとに箸を置く**：満腹中枢が働き、食後の消費も増える。
+- **09 手間がかかる料理を選ぶ**（焼き魚など）：自然とゆっくり。
+- **26 菓子は袋から器に出す**／**28 小皿**／**29 小さなカトラリー**／**30 大盛り→並盛り**：量の把握と視覚的満足。
+- **33 食べ終わったらすぐ歯磨き**／**34 ながらスマホ禁止**：追加の間食を断ち食事に集中。
+
+### C. 選び方
+- **03 ハンバーグよりステーキ**：原形に近いほど消化ゆるやか＝血糖安定。
+- **12 加工食品はパッケージ裏チェック**：形が想像できない原材料は避ける（UPF回避）。
+- **13 食パンと白米なら白米**：白米のほうがGI値が低い。
+- **14 肉と魚なら魚**：EPA/DHAが血液をサラサラに、脂肪燃焼を助ける。
+- **21 飲むなら蒸留酒**（糖質ほぼゼロ）／**22 シメは麺より味噌汁**（発酵食品で腸を整える）。
+- **25 おやつは高カカオチョコ**：カカオ70%以上は低GI。
+
+### D. タイミング・体内時計（BMAL1）
+- **35 寝る3時間前までに食べ終える**／**36 朝食は抜かない**（起床2時間以内で基礎代謝が底上げ）。
+- **37 3食は12時間以内に**／**38 揚げ物は昼に**（BMAL1が少ない）／**39 甘いものは午後3時**（BMAL1が最少）。
+
+### E. 食材・成分の習慣
+- **10 緑茶**（カテキンが脂肪吸収抑制）／**11 腹八分目**／**15 発酵食品**（味噌・キムチ・納豆・ヨーグルト）。
+- **16 タンパク質を確保**／**17 食物繊維の多い野菜**（枝豆・こんにゃく・根菜）／**18 だしで減塩**。
+- **19 1日1回酢の物**（内臓脂肪減・血糖抑制）／**24 空腹になる前にヘルシー間食**（200kcal以下）。
+
+### F. 行動・環境・メンタル
+- **41 食べすぎても後悔しない**（罪悪感＝ストレスホルモン増）／**42 空腹＝体脂肪燃焼中と捉える**。
+- **45 明るい店で食べる**（暗い店は高カロリーを頼みやすい）／**46 食べたものを記録**／**47 空腹時に買い物しない**。
+- **48 立って食べる**／**49 1駅歩いたら夜のおかず＋1品**／**50 二次会に行かない**。
+
+---
+
+## R2. 食事の科学キーワード
+### 血糖値スパイク
+食後血糖が急上昇→急降下。ランチ後の強烈な眠気の主犯格。健常者の食後2時間値は140mg/dL未満が目安、200以上は糖尿病域。スパイクのたびにインスリンが出て、余った糖が脂肪に変わる。
+
+### インスリン抵抗性
+高血糖が続くとインスリンが効きにくくなり、膵臓はさらに分泌→高血糖＋高インスリンのW悪循環。運動不足・炭水化物主体が原因に。
+
+### GI値（血糖の上がりやすさ）
+70以上＝高GI、56〜69＝中、55以下＝低GI。主食は低GIに替えるのが基本。
+[[FIG:gi]]
+
+### AGEs（糖化）
+糖の摂りすぎでタンパク質が劣化＝カラダが「焦げる」。シミ・シワ・動脈硬化など老化を進め、最終AGEsは不可逆。
+
+### UPF（超加工食品）
+添加物を含む超加工食品。腸の炎症・食欲増加。原材料で「形が想像できないもの」を避ける。
+
+### 脂肪のヤバさ：内臓・異所性
+- 日本人（農耕民族）は**内臓脂肪を溜めやすい**。腸間膜などに溜まり糖尿病リスクに関与。
+- **異所性脂肪（第3の脂肪）**：肝・腎・膵・心・筋肉など本来溜まらない場所に溜まる「劣化した油」。最もヤバい。
+
+### アディポサイトカイン
+脂肪細胞が出す物質。健全なら善玉（アディポネクチン＝動脈硬化抑制、レプチン＝食欲調整）、肥大化すると悪玉（PAI-1＝血栓、TNF-α/IL-6＝インスリン抵抗性）。
+
+### 脂肪肝＝MASLD
+酒飲み専用ではない。旧NAFLD→MASLDに改名。脂肪肝→MASH→肝硬変/肝がん。甘いもの好き・食べ過ぎでリスク大。
+
+### 燃やす仕組み：ミトコンドリア／褐色脂肪／オートファジー
+- **ミトコンドリア**：エネルギー工場。きつめの運動＋適度な空腹（ホルミシス）で活性化。
+- **褐色脂肪細胞**：UCP-1で脂肪を熱に。肩甲骨・脇・背骨周辺。寒冷刺激でベージュ脂肪化も。
+- **オートファジー**（2016ノーベル賞）：空腹時間で古い細胞をリサイクル。12〜16時間断食。
+
+---
+
+## R3. 油・脂質の知識
+### 油と脂、中性脂肪
+常温で液体＝油、固体＝脂。食事脂質の約90%は**中性脂肪（グリセロール1＋脂肪酸3）**。脂肪酸の性質が中性脂肪の特徴を決める。
+
+### 脂肪酸の種類
+- **飽和**（パルミチン・ステアリン酸／肉の脂）：二重結合なし、固まりやすい。
+- **不飽和**：一価＝オレイン酸（オリーブ）／多価＝オメガ6（リノール酸）・オメガ3（α-リノレン酸・EPA・DHA）。二重結合が多いほど酸化しやすい。
+- **中鎖脂肪酸（MCT）**：門脈経由で素早くエネルギー、蓄積しにくい。
+
+### 必須脂肪酸（体内で作れない）
+リノール酸（ω6）／α-リノレン酸（ω3）は食事必須。サラダ油からも少量摂れるが、エゴマ・アマニ油が圧倒的。
+[[FIG:omega]]
+
+### α-リノレン酸→EPA/DHA 変換の男女差
+**男性は変換率が低くDHAはほぼ作れない** → 男性は青魚（EPA/DHA）を直接摂るのが有利。FADS遺伝子型で個人差も大。
+[[FIG:convert]]
+
+---
+
+## R4. オイルファースト & ロカボ
+> 監修：山田悟。「ベジファースト→オイルファースト」へ。
+
+- 油を最初に摂ると**インクレチン（GIP/GLP-1）**が出て糖の吸収を緩やかにし満腹に。タンパク質でも満腹に。
+- **カーボラスト（糖質を最後）**で食後血糖の上昇が最も抑えられる。
+- **ロカボのゴールデンルール**：主食（穀物）を半減、タンパク質・脂質・食物繊維を増。
+- **1日の糖質量＝1食20〜40g×3食＋間食10g＝70〜130g**。
+- 主食の糖質（半分量）：白米茶碗1杯約55g(27)／食パン6枚切1枚27g(13)／うどん1玉50g(25)／そば1玉40g(20)／スパゲッティ58g(29)。
+- オイルファーストで叶う3つ：メタボリックドミノが倒れない／疲れにくい／がん予防。
+
+---
+
+## R5. 太りにくくする食材・成分
+- **短鎖脂肪酸**：腸内細菌が食物繊維から作る（酢酸・酪酸・プロピオン酸）。血糖上昇抑制・脂肪蓄積防止。
+- **オメガ3**：DHA/EPA（青魚）、α-リノレン酸（アマニ・エゴマ油）。白色脂肪のベージュ化を促す可能性。
+- **ガレート型カテキン**（緑茶）：内臓脂肪面積の減少が報告（3か月）。
+- **γ-オリザノール**（玄米由来ポリフェノール）：脳でドーパミン受容体を改善し高脂質欲求を軽減、HbA1c低下。
+- **酢（酢酸）**：内臓脂肪減・食後血糖抑制。1日1回の酢の物。
+
+---
+
+## R6. 外食・コンビニ攻略
+### 共通の基本（オイルファースト食べ順）
+1. 低糖質・オイルリッチな一品（ナッツ、高カカオチョコ）
+2. 油とタンパク質の多い主菜・副菜（唐揚げ、ツナサラダ）
+3. 最後に糖質（ご飯半分、パン小1個）
+酒はハイボール・無糖サワー・蒸留酒。ビールは最初の1杯まで。
+
+### シーン別 食べ順
+- **居酒屋**：ハイボール→ナムル→トマトスライス(マヨ)→アジフライ→厚揚げ→焼き鳥(皮/ぼんじり/もも)→チャーハン
+- **牛丼店**：サラダ(オイルドレッシング)→チーズ牛丼(ご飯超少なめ)→お茶
+- **コンビニ**：唐揚げ→ゴボウサラダ→茹で卵/納豆→春雨スープ
+- **ホテルブッフェ**：オムレツ+ウインナー→ツナサラダ→ヨーグルト→クロワッサン+ブラックコーヒー
+- **イタリアン**：スパークリングワイン→エスカベッシュ→カプレーゼ→ミラノ風カツレツ→カルボナーラ
+- **ステーキ店**：サーロイン→付け合わせ→コンソメスープ→ロールパン
+- **焼き肉店**：上牛タン→豚カルビ→牛カルビ→チョレギサラダ→クッパ
+
+### 管理栄養士オーダー例
+- **居酒屋**：原形が残る海鮮（低脂質高タンパクのイカ・タコ）から。マヨは控えめ（大さじ1＝99kcal）。
+- **焼肉**：温スープ→序盤からご飯→キムチ＆サンチュ。脂の多いカルビより**サガリ・ハラミの赤身**。
+- **町中華**：タンパク質先取り、野菜はピーマン/ブロッコリー、餃子に酢こしょう。麻婆豆腐は植物性×動物性タンパクで理想比1:1。
+
+### コンビニ1日の組み立て（セブン基準）
+- **朝**：おにぎり+カフェラテ+ほっけ塩焼き+ほうれん草胡麻和え＝**545kcal/P32.7g**
+- **昼**：ざるそば+野菜一日これ一本+茶碗蒸し+豚しゃぶサラダ＝**651kcal/P44.9g**
+- **間食**：ヨーグルト+高カカオチョコ＝**207kcal/P12.7g**
+- **夜**：ミニ冷し中華+餃子スープ＝**444kcal/P22.6g**（遅い夕食は消化重視・麺少なめ）
+
+---
+
+## R7. ちょい足しオイルのアイデア
+定番食材に油を垂らしてオイル料理化（大さじ1＝約14g）。
+- リンゴ+カマンベール・アーモンド／味付きメカブ+グレープシードオイル
+- 冷や奴+エゴマオイル（醤油の塩分を油に置換＝減塩）／キュウリ糠漬け+クリームチーズ・クルミ
+- ホウレンソウ和え物+クルミ／サラダチキン+ヘーゼルナッツ
+- 味噌汁+アボカド／小麦ブランシリアル+牛乳+MCTオイル
+- 卵かけご飯+ゴマ油（血糖上昇を抑制）／納豆+アマニオイル
+
+---
+
+## R8. 運動する人のオイルファースト
+> 監修：山田悟。アスリート＝「高タンパク低脂質」のイメージが強いが「運動にこそ油が必要」。★ラン・筋トレ直結。
+
+### 運動のメインエネルギーは脂肪
+貯蔵量が桁違い。体脂肪率10%のスリム体型でも、脂肪は約46,800kcal分。グリコーゲンは約1,200kcal分しかない。軽い運動はエネルギーの約90%を脂肪が供給する。
+[[FIG:fuel]]
+[[FIG:energy]]
+
+### 脂質適応状態（ファットアダプト）
+糖質を控え油から脂質を多めに摂る生活を2〜4週続けると、脂肪をエネルギーに変えるのが上手な「脂質適応状態」に。エリートが採用。
+
+### 油を控えすぎる危険＝LEA
+脂質を避けると利用可能エネルギーが不足（Low Energy Availability）。月経など生体機能の維持エネルギーまで欠乏。脂肪を減らした分は油を増やすのが正解。
+- 例：マテイ・トート（2016リオ五輪50km競歩 金）。
+
+### 筋トレでもファットアダプトでOK
+1セッション40〜60分なら筋に蓄えたグリコーゲンでカバー可能。糖質は最小限に（インスリンを抑え筋合成の邪魔を回避）、材料のタンパク質を積極的に。
+- 例：長友佑都（『長友佑都のファットアダプト食事法』）。
+
+### 運動直前の糖質はむしろパフォーマンスを下げる
+運動前に糖質→血糖上昇→インスリン分泌→運動と無関係の筋・脂肪にも血糖が流れ、運動筋がエネルギー不足。低血糖を恐れた脳が運動量を抑える。
+- 例：和田毅（ファットアダプト転向で足のつり減・スタミナ向上）。
+
+### カーボローディングは不要かもしれない
+高糖質低脂質(HC)と低糖質高脂質(LC)で平均20か月。180分の高強度有酸素後でも筋グリコーゲン貯蔵量に差なし。
+[[FIG:glycogen]]
+
+### 持久力が上がる理由＝ミトコンドリア
+オイルファーストで油（血中脂肪酸）を多く使うとミトコンドリアが増え持久力UP。持久トレ×オイルファーストは鬼に金棒。
+- 例：エリウド・キプチョゲ（五輪マラソン金）。
+
+### 血糖値を測りながら運動する時代（CGM）
+心拍に加えCGM（持続血糖モニタリング）で運動中の血糖をリアルタイム把握。キプチョゲは血糖安定のため油の摂取を重視とみられる。
+
+---
+
+## ★自分の運用への接続
+- **タンパク質150g/日死守**（core.md）と整合（R6）。残りはプロテインで上乗せ。
+- **男性はDHA変換率が低い（R3）** → 青魚・魚を優先。
+- **外食・飲み会** → オイル/タンパク→野菜→糖質最後、蒸留酒、シメは味噌汁（insights Q1-1/Q1-2）。
+- **R8はラン直結だが注意**：ファットアダプトは2〜4週かけて適応する食事法の大転換で、現行のリコンプ方針とは別物。今は知識として保持。
+</script>
+
+<script>
+  // ---- PIN gate (0000) ----
+  var PIN="0000", KEY="fref_ok";
+  function open_(){ document.getElementById('gate').style.display='none'; document.getElementById('app').style.display='block'; render(); }
+  if(localStorage.getItem(KEY)==='1'){ open_(); }
+  function tryOpen(){
+    var v=document.getElementById('pin').value;
+    if(v===PIN){ localStorage.setItem(KEY,'1'); open_(); }
+    else{ document.getElementById('gateErr').textContent='PINが違います'; }
+  }
+  document.getElementById('gateBtn').addEventListener('click', tryOpen);
+  document.getElementById('pin').addEventListener('keydown', function(e){ if(e.key==='Enter') tryOpen(); });
+
+  // ---- original SVG figures (built from source data, not magazine art) ----
+  var FAT="#E88A0A", CARB="#3AABA8", LINE="#e0cfa6", MUT="#8a7d63", NAVY="#1a3a5c";
+  var FIGS={
+    energy:{cap:'運動強度とエネルギー源（イメージ）。軽い運動ほど脂肪の割合が大きい。強度が上がると糖質も増えるが、それでも脂肪が主役。<span class="src">出典：Am J Physiol 1993 をもとに作図</span>',
+      svg:'<svg viewBox="0 0 620 180">'+
+        '<text x="8" y="40" font-size="13" fill="'+NAVY+'">軽い運動</text>'+
+        '<rect x="120" y="24" width="396" height="30" fill="'+FAT+'"/><rect x="516" y="24" width="44" height="30" fill="'+CARB+'"/>'+
+        '<text x="140" y="44" font-size="13" fill="#fff">脂肪 約90%</text>'+
+        '<text x="8" y="118" font-size="13" fill="'+NAVY+'">きつい運動</text>'+
+        '<rect x="120" y="102" width="242" height="30" fill="'+FAT+'"/><rect x="362" y="102" width="198" height="30" fill="'+CARB+'"/>'+
+        '<text x="150" y="122" font-size="13" fill="#fff">脂肪</text><text x="420" y="122" font-size="13" fill="#fff">糖質</text>'+
+        '<rect x="120" y="156" width="14" height="14" fill="'+FAT+'"/><text x="140" y="168" font-size="12" fill="'+MUT+'">脂肪（中性脂肪・遊離脂肪酸）</text>'+
+        '<rect x="360" y="156" width="14" height="14" fill="'+CARB+'"/><text x="380" y="168" font-size="12" fill="'+MUT+'">糖質（グリコーゲン・血糖）</text>'+
+      '</svg>'},
+    fuel:{cap:'体内のエネルギー貯蔵量の比較。脂肪はグリコーゲンの約39倍。だから持久運動のメイン燃料は脂肪。<span class="src">体脂肪率10%・体重65kg想定</span>',
+      svg:'<svg viewBox="0 0 620 150">'+
+        '<text x="8" y="38" font-size="13" fill="'+NAVY+'">体脂肪</text>'+
+        '<rect x="120" y="22" width="470" height="30" fill="'+FAT+'"/>'+
+        '<text x="135" y="42" font-size="14" fill="#fff" font-weight="bold">約 46,800 kcal</text>'+
+        '<text x="8" y="103" font-size="13" fill="'+NAVY+'">グリコーゲン</text>'+
+        '<rect x="120" y="88" width="13" height="30" fill="'+CARB+'"/>'+
+        '<text x="142" y="108" font-size="14" fill="'+CARB+'" font-weight="bold">約 1,200 kcal</text>'+
+        '<text x="120" y="140" font-size="12" fill="'+MUT+'">※ 脂肪 1g=7.2kcal ／ 糖質 1g=4kcal</text>'+
+      '</svg>'},
+    glycogen:{cap:'筋グリコーゲン量：高糖質低脂質(HC)群と低糖質高脂質(LC)群で差はない＝カーボローディングは必須でない。<span class="src">出典：Metabolism 2016;65:100-110 をもとに作図（概略値）</span>',
+      svg:(function(){
+        var groups=[['ベースライン',140,140],['運動中',50,48],['運動2時間後',88,92]];
+        var x0=70,y0=20,h=120,base=y0+h, gx=[150,330,510], bw=34, max=160;
+        var s='<svg viewBox="0 0 600 200">';
+        // y grid
+        [0,40,80,120,160].forEach(function(v){var y=base-v/max*h; s+='<line x1="60" y1="'+y+'" x2="580" y2="'+y+'" stroke="'+LINE+'"/><text x="54" y="'+(y+4)+'" font-size="10" fill="'+MUT+'" text-anchor="end">'+v+'</text>';});
+        groups.forEach(function(g,i){
+          var cx=gx[i];
+          var h1=g[1]/max*h, h2=g[2]/max*h;
+          s+='<rect x="'+(cx-bw-3)+'" y="'+(base-h1)+'" width="'+bw+'" height="'+h1+'" fill="#cdbf9b"/>';
+          s+='<rect x="'+(cx+3)+'" y="'+(base-h2)+'" width="'+bw+'" height="'+h2+'" fill="'+FAT+'"/>';
+          s+='<text x="'+cx+'" y="'+(base+16)+'" font-size="11" fill="'+NAVY+'" text-anchor="middle">'+g[0]+'</text>';
+        });
+        s+='<rect x="360" y="178" width="13" height="13" fill="#cdbf9b"/><text x="378" y="189" font-size="11" fill="'+MUT+'">HC(高糖質)</text>';
+        s+='<rect x="470" y="178" width="13" height="13" fill="'+FAT+'"/><text x="488" y="189" font-size="11" fill="'+MUT+'">LC(高脂質)</text>';
+        s+='<text x="14" y="100" font-size="10" fill="'+MUT+'" transform="rotate(-90 14 100)">mmol/kg ww</text>';
+        return s+'</svg>';
+      })()},
+    gi:{cap:'GI値スケール。55以下=低GI（青）、56〜69=中、70以上=高（橙）。主食を低GIに替えるのが基本。',
+      svg:(function(){
+        var x0=40,x1=580,w=x1-x0, y=46,bh=22;
+        function X(v){return x0+v/100*w;}
+        var s='<svg viewBox="0 0 600 110">';
+        s+='<rect x="'+x0+'" y="'+y+'" width="'+(X(55)-x0)+'" height="'+bh+'" fill="#7ec8c6"/>';
+        s+='<rect x="'+X(55)+'" y="'+y+'" width="'+(X(70)-X(55))+'" height="'+bh+'" fill="#f0c969"/>';
+        s+='<rect x="'+X(70)+'" y="'+y+'" width="'+(x1-X(70))+'" height="'+bh+'" fill="'+FAT+'"/>';
+        [0,25,50,75,100].forEach(function(v){s+='<text x="'+X(v)+'" y="'+(y+bh+16)+'" font-size="10" fill="'+MUT+'" text-anchor="middle">'+v+'</text>';});
+        var marks=[['そば',46],['玄米',62],['白米',76],['コーンフレーク',81]];
+        marks.forEach(function(m,i){var xx=X(m[1]); var ty=(i%2===0)?34:30;
+          s+='<line x1="'+xx+'" y1="'+(y-6)+'" x2="'+xx+'" y2="'+(y+bh+4)+'" stroke="'+NAVY+'" stroke-width="1.5"/>';
+          s+='<text x="'+xx+'" y="'+(i%2===0?28:y+bh+30)+'" font-size="11" fill="'+NAVY+'" text-anchor="middle">'+m[0]+' '+m[1]+'</text>';
+        });
+        return s+'</svg>';
+      })()},
+    omega:{cap:'植物油のα-リノレン酸（必須脂肪酸ω3）含有率。エゴマ油・アマニ油が突出。<span class="src">出典：日本食品標準成分表2020年版 をもとに作図</span>',
+      svg:(function(){
+        var data=[['エゴマ油',61.3],['アマニ油',59.5],['菜種油',8.1],['大豆油',6.6]];
+        var x0=110,w=440,y0=18,bh=26,gap=14;
+        var s='<svg viewBox="0 0 600 '+(y0+data.length*(bh+gap))+'">';
+        data.forEach(function(d,i){var y=y0+i*(bh+gap); var bw=d[1]/70*w;
+          s+='<text x="100" y="'+(y+18)+'" font-size="12" fill="'+NAVY+'" text-anchor="end">'+d[0]+'</text>';
+          s+='<rect x="'+x0+'" y="'+y+'" width="'+bw+'" height="'+bh+'" fill="'+FAT+'" rx="3"/>';
+          s+='<text x="'+(x0+bw+6)+'" y="'+(y+18)+'" font-size="12" fill="'+MUT+'">'+d[1]+'%</text>';
+        });
+        return s+'</svg>';
+      })()},
+    convert:{cap:'α-リノレン酸→EPA/DPA/DHA への変換率（男女）。男性はDHAが検出されず＝青魚を直接摂るべき。<span class="src">出典：Br J Nutr 2002 をもとに作図</span>',
+      svg:(function(){
+        var metrics=['EPA','DPA','DHA']; var male=[8,8,0], female=[21,6,9];
+        var base=130,h=100,max=25, gx=[110,300,490], bw=34;
+        var s='<svg viewBox="0 0 600 170">';
+        [0,10,20].forEach(function(v){var y=base-v/max*h; s+='<line x1="70" y1="'+y+'" x2="560" y2="'+y+'" stroke="'+LINE+'"/><text x="64" y="'+(y+4)+'" font-size="10" fill="'+MUT+'" text-anchor="end">'+v+'%</text>';});
+        metrics.forEach(function(m,i){var cx=gx[i]; var hm=male[i]/max*h, hf=female[i]/max*h;
+          s+='<rect x="'+(cx-bw-3)+'" y="'+(base-hm)+'" width="'+bw+'" height="'+hm+'" fill="'+NAVY+'"/>';
+          s+='<rect x="'+(cx+3)+'" y="'+(base-hf)+'" width="'+bw+'" height="'+hf+'" fill="'+FAT+'"/>';
+          if(male[i]===0){s+='<text x="'+(cx-bw/2-3)+'" y="'+(base-3)+'" font-size="10" fill="#c0392b" text-anchor="middle">0</text>';}
+          s+='<text x="'+cx+'" y="'+(base+16)+'" font-size="12" fill="'+NAVY+'" text-anchor="middle">'+m+'</text>';
+        });
+        s+='<rect x="360" y="148" width="13" height="13" fill="'+NAVY+'"/><text x="378" y="159" font-size="11" fill="'+MUT+'">男性</text>';
+        s+='<rect x="450" y="148" width="13" height="13" fill="'+FAT+'"/><text x="468" y="159" font-size="11" fill="'+MUT+'">女性</text>';
+        return s+'</svg>';
+      })()}
+  };
+
+  // ---- markdown renderer (h2-4, ul, strong, hr, quote-note, fig) ----
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function inline(s){ return esc(s).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); }
+  var TOC=[];
+  function render(){
+    var src=document.getElementById('src-ref').textContent.replace(/^\n/,'');
+    var lines=src.split('\n'), out=[], inUl=false, sec=0;
+    function closeUl(){ if(inUl){ out.push('</ul>'); inUl=false; } }
+    for(var i=0;i<lines.length;i++){
+      var ln=lines[i].replace(/\s+$/,'');
+      var fm=ln.match(/^\[\[FIG:([a-z]+)\]\]$/);
+      if(fm){ closeUl(); var f=FIGS[fm[1]]; if(f){ out.push('<figure class="fig">'+f.svg+'<figcaption>'+f.cap+'</figcaption></figure>'); } }
+      else if(/^#### /.test(ln)){ closeUl(); out.push('<h4>'+inline(ln.slice(5))+'</h4>'); }
+      else if(/^### /.test(ln)){ closeUl(); out.push('<h3>'+inline(ln.slice(4))+'</h3>'); }
+      else if(/^## /.test(ln)){ closeUl(); sec++; var t=ln.slice(3); var id='s'+sec; var label=t.replace(/^R\d+\.\s*/,'').replace(/^★/,''); TOC.push({id:id,label:label.length>10?label.slice(0,9)+'…':label,raw:t}); out.push('<h2 id="'+id+'">'+inline(t)+'</h2>'); }
+      else if(/^# /.test(ln)){ closeUl(); out.push('<h1>'+inline(ln.slice(2))+'</h1>'); }
+      else if(/^>\s?/.test(ln)){ closeUl(); out.push('<p class="note">'+inline(ln.replace(/^>\s?/,''))+'</p>'); }
+      else if(/^---\s*$/.test(ln)){ closeUl(); out.push('<hr>'); }
+      else if(/^- /.test(ln)){ if(!inUl){ out.push('<ul>'); inUl=true; } out.push('<li>'+inline(ln.slice(2))+'</li>'); }
+      else if(ln===''){ closeUl(); }
+      else { closeUl(); out.push('<p>'+inline(ln)+'</p>'); }
+    }
+    closeUl();
+    document.getElementById('content').innerHTML=out.join('\n');
+    var nav=document.getElementById('nav');
+    nav.innerHTML=TOC.map(function(t){return '<a href="#'+t.id+'">'+esc(t.raw.replace(/\.\s.*/,'').replace(/^R/,'R'))+' '+esc(t.label)+'</a>';}).join('');
+  }
+</script>
+</body>
+</html>
