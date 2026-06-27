@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.19</title>
+<title>Fitness Viewer v3.20</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -36,6 +36,20 @@
   .tabs{display:flex; gap:4px; flex:1 1 auto; justify-content:flex-end}
   .tab{flex:0 0 auto; min-width:96px; text-align:center; padding:6px 10px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-size:13px; font-weight:700; border-bottom:3px solid transparent; font-family:inherit;}
   .tab.active{color:var(--text); border-bottom-color:var(--accent)}
+  #eventBanner{max-width:1080px; margin:10px auto 0; padding:0 16px; display:flex; flex-direction:column; gap:8px;}
+  #eventBanner:empty{display:none}
+  .evt{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-left:5px solid var(--accent2); border-radius:12px; padding:10px 14px;}
+  .evt .evt-d{flex:0 0 auto; min-width:58px; text-align:center; background:var(--accent2); color:#fff; border-radius:10px; padding:6px 8px; line-height:1.15;}
+  .evt .evt-d b{display:block; font-size:22px; font-weight:800}
+  .evt .evt-d span{font-size:10px; opacity:.95}
+  .evt .evt-x{flex:1 1 auto; min-width:0}
+  .evt .evt-t{font-weight:800; font-size:14px; color:var(--text)}
+  .evt .evt-s{font-size:12px; color:var(--muted); margin-top:2px}
+  .evt.is-soon{border-left-color:#d23b3b}
+  .evt.is-soon .evt-d{background:#d23b3b}
+  .evt.is-today .evt-d{background:var(--accent)}
+  .evt.is-done{opacity:.55}
+  .evt.is-done .evt-d{background:var(--none)}
   main{padding:12px 16px}
   @media(min-width:760px){ main{padding:12px 32px} }
   #toc{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:22px;}
@@ -143,12 +157,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.19</p>
+  <p style="opacity:.45">v3.20</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.19</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.20</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -156,6 +170,7 @@
       <button class="tab" data-t="insights">知の財産</button>
     </div>
   </header>
+  <div id="eventBanner"></div>
   <main>
     <div id="toc"></div>
     <div id="content"></div>
@@ -1192,12 +1207,69 @@
 ---
 </script>
 
+<script type="text/plain" id="src-events"># イベント目標（events.md）
+
+※突発・期日付きのイベント目標の正本。恒常目標（core.md）とは別管理。
+※各イベントはメタ行（date / status / type）＋本文で持つ。ビューアのカウントダウンが date・status を読む。
+※status は open（進行中）/ done（終了）。期日を過ぎた open は自動で「終了」表示になる。
+
+---
+
+## 7/7 TANITA測定
+<!-- date: 2026-07-07 -->
+<!-- time: 11:00 -->
+<!-- status: open -->
+<!-- type: 測定 -->
+
+- 期日：2026-07-07（火）11:00
+- 種別：TANITA体組成測定（3〜4週ごとの再測定チェックポイント）
+- 起点：2026-06-27（この時点で残10日）
+- ゴール（core.md の恒常目標にひも付け）：
+  - **体重**：8/31夜72kgへ向かう中間確認（前回比で下げ方向に進んでいるか）
+  - **筋肉量**：55.0kg を維持（割らない）
+  - **体脂肪率**：21.2%（2026-05-05 基準）より下げる
+- 仕上げ方針：6/28〜7/5で実質の減量（P150g死守＋ゆるい赤字＋予定どおりのトレ）、7/6はテーパー（追い込まない・糖質普通・塩分控えめ・アルコールなし）、7/7当日は測定前に発汗運動をせず水分は普通量・トイレを済ませて条件を一定にする。クラッシュ脱水はしない。
+</script>
+
 <script>
 (function(){
   var PIN="0000";
   var gate=document.getElementById('gate'),app=document.getElementById('app');
   var pin=document.getElementById('pin'),err=document.getElementById('gateErr');
-  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} render('week'); }
+  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} renderEvents(); render('week'); }
+  function renderEvents(){
+    var box=document.getElementById('eventBanner'); if(!box) return;
+    var blocks=srcEvents.split(/\n##\s+/).slice(1);
+    var today=new Date(); today.setHours(0,0,0,0);
+    var items=[];
+    blocks.forEach(function(b){
+      var title=b.split('\n')[0].trim();
+      var md=b.match(/date:\s*(\d{4})-(\d{2})-(\d{2})/);
+      if(!md) return;
+      var d=new Date(+md[1], +md[2]-1, +md[3]); d.setHours(0,0,0,0);
+      var st=(b.match(/status:\s*(\w+)/)||[])[1]||'open';
+      var tm=(b.match(/time:\s*([0-9:]+)/)||[])[1]||'';
+      var days=Math.round((d-today)/86400000);
+      items.push({title:title, date:d, status:st, time:tm, days:days});
+    });
+    // open のみ・終了(done)や大幅past以外を、期日が近い順に
+    items=items.filter(function(x){ return x.status!=='done'; });
+    items.sort(function(a,b){ return a.date-b.date; });
+    var mm=['1','2','3','4','5','6','7','8','9','10','11','12'];
+    box.innerHTML=items.map(function(x){
+      var cls='evt', big, sub, mdLabel=(x.date.getMonth()+1)+'/'+x.date.getDate();
+      var wd=['日','月','火','水','木','金','土'][x.date.getDay()];
+      if(x.days>0){ big='<b>'+x.days+'</b><span>日後</span>'; if(x.days<=3) cls+=' is-soon'; }
+      else if(x.days===0){ big='<b>本日</b>'; cls+=' is-today'; }
+      else { big='<b>終了</b>'; cls+=' is-done'; }
+      var when=mdLabel+'（'+wd+'）'+(x.time?(' '+x.time):'');
+      if(x.days>0) sub='目標日 '+when+' まで あと'+x.days+'日';
+      else if(x.days===0) sub='目標日 '+when+'（今日）';
+      else sub='目標日 '+when+' は過ぎました';
+      return '<div class="'+cls+'"><div class="evt-d">'+big+'</div>'+
+             '<div class="evt-x"><div class="evt-t">'+x.title+'</div><div class="evt-s">'+sub+'</div></div></div>';
+    }).join('');
+  }
   function tryPin(){ if(pin.value===PIN){unlock();} else {err.textContent='PINが違います'; pin.value=''; pin.focus();} }
   document.getElementById('gateBtn').onclick=tryPin;
   pin.addEventListener('keyup',function(e){ if(pin.value.length===4 && pin.value===PIN){unlock();} if(e.key==='Enter') tryPin(); });
@@ -1206,6 +1278,7 @@
   var srcLog=document.getElementById('src-log').textContent;
   var srcIns=document.getElementById('src-insights').textContent;
   var srcReview=document.getElementById('src-review').textContent;
+  var srcEvents=document.getElementById('src-events').textContent;
   var content=document.getElementById('content'), toc=document.getElementById('toc');
   marked.setOptions({gfm:true, breaks:false});
   var SECTIONS=['朝トレ','朝食','昼食','夕トレ','夕食','夜トレ'];
