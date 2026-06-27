@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.20</title>
+<title>Fitness Viewer v3.21</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -36,20 +36,24 @@
   .tabs{display:flex; gap:4px; flex:1 1 auto; justify-content:flex-end}
   .tab{flex:0 0 auto; min-width:96px; text-align:center; padding:6px 10px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-size:13px; font-weight:700; border-bottom:3px solid transparent; font-family:inherit;}
   .tab.active{color:var(--text); border-bottom-color:var(--accent)}
-  #eventBanner{max-width:1080px; margin:10px auto 0; padding:0 16px; display:flex; flex-direction:column; gap:8px;}
-  #eventBanner:empty{display:none}
-  .evt{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-left:5px solid var(--accent2); border-radius:12px; padding:10px 14px;}
-  .evt .evt-d{flex:0 0 auto; min-width:58px; text-align:center; background:var(--accent2); color:#fff; border-radius:10px; padding:6px 8px; line-height:1.15;}
-  .evt .evt-d b{display:block; font-size:22px; font-weight:800}
-  .evt .evt-d span{font-size:10px; opacity:.95}
-  .evt .evt-x{flex:1 1 auto; min-width:0}
-  .evt .evt-t{font-weight:800; font-size:14px; color:var(--text)}
-  .evt .evt-s{font-size:12px; color:var(--muted); margin-top:2px}
-  .evt.is-soon{border-left-color:#d23b3b}
-  .evt.is-soon .evt-d{background:#d23b3b}
-  .evt.is-today .evt-d{background:var(--accent)}
-  .evt.is-done{opacity:.55}
-  .evt.is-done .evt-d{background:var(--none)}
+  #events{max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:14px;}
+  .evcard{background:var(--card); border:1px solid var(--line); border-left:6px solid var(--accent2); border-radius:14px; padding:16px 18px;}
+  .evhd{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .evbadge{flex:0 0 auto; min-width:62px; text-align:center; background:var(--accent2); color:#fff; border-radius:12px; padding:8px 8px; line-height:1.12;}
+  .evbadge b{display:block; font-size:26px; font-weight:800}
+  .evbadge span{font-size:10px; opacity:.95}
+  .evttl{font-weight:800; font-size:17px; color:var(--text)}
+  .evwhen{font-size:12px; color:var(--muted); margin-top:3px}
+  .evbody{font-size:13.5px}
+  .evbody ul{margin:8px 0 0; padding-left:20px}
+  .evbody li{margin:3px 0}
+  .evbody strong{color:#b5680a}
+  .evcard.is-soon{border-left-color:#d23b3b}
+  .evcard.is-soon .evbadge{background:#d23b3b}
+  .evcard.is-today .evbadge{background:var(--accent)}
+  .evcard.is-done{opacity:.6}
+  .evcard.is-done .evbadge{background:var(--none)}
+  .ev-empty{color:var(--muted); text-align:center; padding:30px 0}
   main{padding:12px 16px}
   @media(min-width:760px){ main{padding:12px 32px} }
   #toc{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:22px;}
@@ -157,20 +161,20 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.20</p>
+  <p style="opacity:.45">v3.21</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.20</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.21</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
       <button class="tab" data-t="log">記録</button>
       <button class="tab" data-t="insights">知の財産</button>
+      <button class="tab" data-t="events">イベント</button>
     </div>
   </header>
-  <div id="eventBanner"></div>
   <main>
     <div id="toc"></div>
     <div id="content"></div>
@@ -1236,39 +1240,50 @@
   var PIN="0000";
   var gate=document.getElementById('gate'),app=document.getElementById('app');
   var pin=document.getElementById('pin'),err=document.getElementById('gateErr');
-  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} renderEvents(); render('week'); }
-  function renderEvents(){
-    var box=document.getElementById('eventBanner'); if(!box) return;
+  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} render('week'); }
+  function renderEventsTab(){
     var blocks=srcEvents.split(/\n##\s+/).slice(1);
     var today=new Date(); today.setHours(0,0,0,0);
     var items=[];
     blocks.forEach(function(b){
-      var title=b.split('\n')[0].trim();
+      var lines=b.split('\n');
+      var title=lines[0].trim();
       var md=b.match(/date:\s*(\d{4})-(\d{2})-(\d{2})/);
       if(!md) return;
       var d=new Date(+md[1], +md[2]-1, +md[3]); d.setHours(0,0,0,0);
       var st=(b.match(/status:\s*(\w+)/)||[])[1]||'open';
       var tm=(b.match(/time:\s*([0-9:]+)/)||[])[1]||'';
       var days=Math.round((d-today)/86400000);
-      items.push({title:title, date:d, status:st, time:tm, days:days});
+      // 本文：先頭タイトル行とメタ行(<!-- -->)を除いた本文
+      var body=lines.slice(1).filter(function(l){ return !/^\s*<!--/.test(l); }).join('\n').trim();
+      items.push({title:title, date:d, status:st, time:tm, days:days, body:body});
     });
-    // open のみ・終了(done)や大幅past以外を、期日が近い順に
-    items=items.filter(function(x){ return x.status!=='done'; });
-    items.sort(function(a,b){ return a.date-b.date; });
-    var mm=['1','2','3','4','5','6','7','8','9','10','11','12'];
-    box.innerHTML=items.map(function(x){
-      var cls='evt', big, sub, mdLabel=(x.date.getMonth()+1)+'/'+x.date.getDate();
-      var wd=['日','月','火','水','木','金','土'][x.date.getDay()];
-      if(x.days>0){ big='<b>'+x.days+'</b><span>日後</span>'; if(x.days<=3) cls+=' is-soon'; }
+    items.sort(function(a,b){
+      var ao=a.status==='done'?1:0, bo=b.status==='done'?1:0;
+      if(ao!==bo) return ao-bo;
+      return a.date-b.date;
+    });
+    var wdn=['日','月','火','水','木','金','土'];
+    var html2=items.map(function(x){
+      var cls='evcard', big, mdLabel=(x.date.getMonth()+1)+'/'+x.date.getDate();
+      var wd=wdn[x.date.getDay()];
+      var done=(x.status==='done');
+      if(done){ big='<b>済</b>'; cls+=' is-done'; }
+      else if(x.days>0){ big='<b>'+x.days+'</b><span>日後</span>'; if(x.days<=3) cls+=' is-soon'; }
       else if(x.days===0){ big='<b>本日</b>'; cls+=' is-today'; }
       else { big='<b>終了</b>'; cls+=' is-done'; }
       var when=mdLabel+'（'+wd+'）'+(x.time?(' '+x.time):'');
-      if(x.days>0) sub='目標日 '+when+' まで あと'+x.days+'日';
+      var sub;
+      if(done) sub='目標日 '+when+'（完了）';
+      else if(x.days>0) sub='目標日 '+when+' まで あと'+x.days+'日';
       else if(x.days===0) sub='目標日 '+when+'（今日）';
       else sub='目標日 '+when+' は過ぎました';
-      return '<div class="'+cls+'"><div class="evt-d">'+big+'</div>'+
-             '<div class="evt-x"><div class="evt-t">'+x.title+'</div><div class="evt-s">'+sub+'</div></div></div>';
+      return '<div class="'+cls+'"><div class="evhd"><div class="evbadge">'+big+'</div>'+
+             '<div><div class="evttl">'+x.title+'</div><div class="evwhen">'+sub+'</div></div></div>'+
+             '<div class="evbody">'+marked.parse(x.body)+'</div></div>';
     }).join('');
+    content.className=''; content.innerHTML='<div id="events">'+(html2||'<div class="ev-empty">イベントはありません</div>')+'</div>';
+    toc.style.display='none'; window.scrollTo(0,0);
   }
   function tryPin(){ if(pin.value===PIN){unlock();} else {err.textContent='PINが違います'; pin.value=''; pin.focus();} }
   document.getElementById('gateBtn').onclick=tryPin;
@@ -1499,7 +1514,7 @@
     else toc.style.display='none';
     window.scrollTo(0,0);
   }
-  function render(which){ document.body.classList.toggle('calfix', which==='week'); if(which==='week')renderWeek(); else if(which==='charts')renderChartsPage(); else renderMd(which); }
+  function render(which){ document.body.classList.toggle('calfix', which==='week'); if(which==='week')renderWeek(); else if(which==='charts')renderChartsPage(); else if(which==='events')renderEventsTab(); else renderMd(which); }
   var _rzt; window.addEventListener('resize',function(){ clearTimeout(_rzt); _rzt=setTimeout(function(){ if(document.body.classList.contains('calfix')) renderWeek(); },200); });
   document.querySelectorAll('.tab').forEach(function(b){
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
