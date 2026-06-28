@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.39</title>
+<title>Fitness Viewer v3.40</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -169,7 +169,7 @@
   .timetag{display:inline-block;font-size:9px;line-height:1.5;background:var(--accent);color:#fff;padding:0 5px;border-radius:7px;margin:0 0 3px 0;font-weight:700;white-space:nowrap;letter-spacing:.02em}
   #rvModal{position:fixed;inset:0;background:rgba(31,42,48,.55);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:36px 14px;overflow:auto}
   #rvModal.show{display:flex}
-  .rvcard{background:var(--card);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;padding:8px 20px 22px;position:relative;box-shadow:0 12px 44px rgba(0,0,0,.28)}
+  .rvcard{background:var(--card);border:1px solid var(--line);border-radius:14px;max-width:920px;width:100%;padding:8px 20px 22px;position:relative;box-shadow:0 12px 44px rgba(0,0,0,.28)}
   #rvClose{position:absolute;top:6px;right:10px;border:0;background:transparent;font-size:26px;line-height:1;color:var(--muted);cursor:pointer}
   .rvcard .md h2{font-size:16px;color:#fff;background:var(--accent);padding:7px 12px;border-radius:8px;margin:14px 34px 12px 0}
   .rvcard .md h3{font-size:14px;margin:14px 0 6px;padding-left:9px;border-left:4px solid var(--accent2)}
@@ -177,6 +177,20 @@
   .rvcard .md li{margin:3px 0}
   .rvcard .md hr{border:0;border-top:1px solid var(--line);margin:14px 0}
   .rvcard .md strong{color:var(--text)}
+  /* iPad/PC：日別モーダルを大きく・文字も読みやすく */
+  @media(min-width:700px){
+    #rvModal{padding:48px 28px}
+    .rvcard{max-width:900px;padding:12px 34px 30px}
+    .rvcard .md h2{font-size:20px;padding:9px 15px}
+    .rvcard .md h3{font-size:17px}
+    .rvcard .md li,.rvcard .md p{font-size:16px;line-height:1.85}
+  }
+  @media(min-width:1100px){
+    .rvcard{max-width:1040px;padding:14px 44px 36px}
+    .rvcard .md h2{font-size:22px}
+    .rvcard .md h3{font-size:18px}
+    .rvcard .md li,.rvcard .md p{font-size:16.5px;line-height:1.9}
+  }
   .dhead{cursor:pointer}
   th.dhead:hover{text-decoration:underline}
   .mdate.dhead::after{content:" ▾";font-size:11px;color:var(--accent)}
@@ -190,12 +204,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.39</p>
+  <p style="opacity:.45">v3.40</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.39</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.40</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
