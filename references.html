@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Nutrition References v1.1</title>
+<title>Nutrition References v1.2</title>
 <style>
   :root{
     --bg:#F5E4C4; --bg2:#efdcb6; --card:#fffaf0; --line:#e0cfa6;
@@ -51,12 +51,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p class="ver">v1.1</p>
+  <p class="ver">v1.2</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Nutrition References</b><span>v1.1</span></div>
+    <div class="ttl"><b>Nutrition References</b><span>v1.2</span></div>
     <a href="./">← Viewer</a>
   </header>
   <nav id="nav"></nav>
@@ -273,7 +273,6 @@
   // ---- PIN gate (0000) ----
   var PIN="0000", KEY="fref_ok";
   function open_(){ document.getElementById('gate').style.display='none'; document.getElementById('app').style.display='block'; render(); }
-  if(localStorage.getItem(KEY)==='1'){ open_(); }
   function tryOpen(){
     var v=document.getElementById('pin').value;
     if(v===PIN){ localStorage.setItem(KEY,'1'); open_(); }
@@ -398,6 +397,8 @@
     var nav=document.getElementById('nav');
     nav.innerHTML=TOC.map(function(t){return '<a href="#'+t.id+'">'+esc(t.raw.replace(/\.\s.*/,'').replace(/^R/,'R'))+' '+esc(t.label)+'</a>';}).join('');
   }
+  // 自動オープンはFIGS/render定義後に実行（早期実行→FIGS未定義→render例外→本文空欄、を防止）
+  try{ if(localStorage.getItem(KEY)==='1'){ open_(); } }catch(e){}
 </script>
 </body>
 </html>
