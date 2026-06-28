@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.40</title>
+<title>Fitness Viewer v3.41</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -179,17 +179,18 @@
   .rvcard .md strong{color:var(--text)}
   /* iPad/PC：日別モーダルを大きく・文字も読みやすく */
   @media(min-width:700px){
-    #rvModal{padding:48px 28px}
-    .rvcard{max-width:900px;padding:12px 34px 30px}
-    .rvcard .md h2{font-size:20px;padding:9px 15px}
-    .rvcard .md h3{font-size:17px}
-    .rvcard .md li,.rvcard .md p{font-size:16px;line-height:1.85}
+    #rvModal{padding:30px 20px}
+    .rvcard{max-width:96vw;padding:16px 42px 38px}
+    .rvcard .md h2{font-size:22px;padding:10px 16px}
+    .rvcard .md h3{font-size:18px}
+    .rvcard .md li,.rvcard .md p{font-size:17px;line-height:1.9}
   }
   @media(min-width:1100px){
-    .rvcard{max-width:1040px;padding:14px 44px 36px}
-    .rvcard .md h2{font-size:22px}
-    .rvcard .md h3{font-size:18px}
-    .rvcard .md li,.rvcard .md p{font-size:16.5px;line-height:1.9}
+    #rvModal{padding:34px 28px}
+    .rvcard{max-width:1280px;padding:20px 60px 46px}
+    .rvcard .md h2{font-size:24px}
+    .rvcard .md h3{font-size:19px}
+    .rvcard .md li,.rvcard .md p{font-size:18px;line-height:1.95}
   }
   .dhead{cursor:pointer}
   th.dhead:hover{text-decoration:underline}
@@ -204,12 +205,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.40</p>
+  <p style="opacity:.45">v3.41</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.40</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.41</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
