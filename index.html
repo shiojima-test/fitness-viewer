@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.36</title>
+<title>Fitness Viewer v3.37</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -54,6 +54,12 @@
   .evcard.is-done{opacity:.6}
   .evcard.is-done .evbadge{background:var(--none)}
   .ev-empty{color:var(--muted); text-align:center; padding:30px 0}
+  .evhd .pl-now{background:var(--accent); color:#fff; font-size:11px; font-weight:800; padding:2px 9px; border-radius:9px}
+  .evhd .pl-fut{background:var(--accent2); color:#fff; font-size:11px; font-weight:800; padding:2px 9px; border-radius:9px}
+  .evhd .pl-pst{background:var(--none); color:#fff; font-size:11px; font-weight:700; padding:2px 9px; border-radius:9px}
+  .plbody ul{margin:4px 0 0; padding-left:18px}
+  .plbody li{margin:3px 0; font-size:12.5px; line-height:1.6}
+  .plbody strong{color:#b5680a}
   .evplan{margin-top:14px; border-top:1px dashed var(--line); padding-top:12px}
   .evplan .pl-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:10px}
   .plday{border:1px solid var(--line); border-radius:11px; margin-top:8px; background:#fffdf8; overflow:hidden}
@@ -178,14 +184,15 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.36</p>
+  <p style="opacity:.45">v3.37</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.36</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.37</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
+      <button class="tab" data-t="plans">予定</button>
       <button class="tab" data-t="charts">推移グラフ</button>
       <button class="tab" data-t="log">記録</button>
       <button class="tab" data-t="insights">知の財産</button>
@@ -1412,6 +1419,38 @@
   var gate=document.getElementById('gate'),app=document.getElementById('app');
   var pin=document.getElementById('pin'),err=document.getElementById('gateErr');
   function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} render('week'); }
+  function renderPlansTab(){
+    // log.md の各日「### 予定...」ブロックを拾い、立てた日だけ新しい順にカード表示
+    var today=new Date(); today.setHours(0,0,0,0);
+    var wdn=['日','月','火','水','木','金','土'];
+    var days=srcLog.split(/\n##\s*▼\s*/).slice(1);
+    var cards=[];
+    days.forEach(function(b){
+      var head=b.split('\n')[0].trim();
+      var dm=head.match(/(\d{1,2})\/(\d{1,2})/); if(!dm) return;
+      // 「### 予定...」セクションを抽出（次の ### まで）
+      var m=b.match(/###\s*予定[^\n]*\n([\s\S]*?)(?=\n###\s|\n---|$)/);
+      if(!m) return;                       // 予定が無い日はカード化しない
+      var body=m[1].trim();
+      if(!body) return;
+      var mo=+dm[1], da=+dm[2];
+      var y=2026; var d=new Date(y,mo-1,da); d.setHours(0,0,0,0);
+      var diff=Math.round((d-today)/86400000);
+      var tag = diff===0?'<span class="pl-now">今日</span>' : diff>0?('<span class="pl-fut">'+diff+'日後</span>') : '<span class="pl-pst">済</span>';
+      var cls='evcard'+(diff===0?' is-today':diff<0?' is-done':'');
+      var title=mo+'/'+da+'（'+wdn[d.getDay()]+'）'+head.replace(/^\d{1,2}\/\d{1,2}[（(][^）)]*[）)]?/,'').trim();
+      cards.push({d:d, diff:diff, html:
+        '<div class="'+cls+'"><div class="evhd"><div class="evttl">'+title+'</div>'+tag+'</div>'+
+        '<div class="evbody plbody">'+marked.parse(body)+'</div></div>'});
+    });
+    cards.sort(function(a,b){ return b.d-a.d; });   // 新しい日が上
+    content.className='';
+    content.innerHTML='<div id="events">'+
+      (cards.length?cards.map(function(c){return c.html;}).join(''):'<div class="ev-empty">予定はまだありません。立てた日だけここに表示されます。</div>')+
+      '</div>';
+    toc.style.display='none'; window.scrollTo(0,0);
+  }
+
   function renderEventsTab(){
     // log から日付→体重 マップ
     var wmap={};
@@ -1718,7 +1757,7 @@
     else toc.style.display='none';
     window.scrollTo(0,0);
   }
-  function render(which){ document.body.classList.toggle('calfix', which==='week'); if(which==='week')renderWeek(); else if(which==='charts')renderChartsPage(); else if(which==='events')renderEventsTab(); else renderMd(which); }
+  function render(which){ document.body.classList.toggle('calfix', which==='week'); if(which==='week')renderWeek(); else if(which==='charts')renderChartsPage(); else if(which==='events')renderEventsTab(); else if(which==='plans')renderPlansTab(); else renderMd(which); }
   var _rzt; window.addEventListener('resize',function(){ clearTimeout(_rzt); _rzt=setTimeout(function(){ if(document.body.classList.contains('calfix')) renderWeek(); },200); });
   document.querySelectorAll('.tab').forEach(function(b){
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
