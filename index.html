@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Fitness Viewer v3.58</title>
+<title>Fitness Viewer v3.59</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -206,12 +206,12 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.58</p>
+  <p style="opacity:.45">v3.59</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.58</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.59</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
@@ -1199,6 +1199,7 @@
 
 - 理由：使う部位が違う。朝の腕立て→ラン→夕方ベンチの間隔が8時間以上あれば、胸・三頭も回復し夕方のベンチも削られない。
 - 適用：朝に上半身自重→ラン、の順なら両立可。脚トレを朝に入れた日は同日のランへの影響を考慮する。
+- ※根拠（文献）：intra-session sequenceの干渉効果メタ分析（Sports Med, 2018）では、**筋トレ→有酸素の順が下半身の動的筋力にやや有利**、肥大・有酸素能・体脂肪率では順序効果なし。両者を数時間あける場合は順序の影響は小さい。
 
 ### Q4-3. 数日まとめて休む予定がある日、トレはどうする？
 
@@ -1214,6 +1215,7 @@
 - 理由：コンパウンドは扱う重量・動員筋・神経出力が大きく、疲労前に置くと最大刺激を安全に入れられる。先に小筋（二頭・三頭・三角）を疲れさせると、後のプレス/ローの出力が落ちる。
 - 適用：プレス/ロー/スクワット系を前半 → カール・エクステンション・サイドレイズを後半。二頭（カール）は背中ローの後、三角（サイドレイズ）は各プレスの後。脚は本来最初だが、維持目的なら安全を優先しつつ順序を固定して前回比を取る。
 - ※根拠：6/20夕方の並び（脚→背中→胸→肩→二頭→三角）はこの原則を満たしていた。
+- ※根拠（文献）：種目順序のシステマティックレビュー/メタ分析「resistance exercise order on muscular strength and hypertrophy」（2021, Eur J Sport Sci）では全体の筋力差は小さい一方、**セッション前半に置いた種目ほど伸びやすい**傾向。結論＝順序そのものより「優先種目・伸びしろを先に新鮮な状態で行う」ことが要点。
 
 ### Q4-5. 腕を太くしたい。何を足す？
 
@@ -1222,6 +1224,22 @@
 - 理由：三頭は腕の太さの**約2/3**を占める。プレス系で間接的には入るが、腕が伸びしろなら直接1種目で成長刺激を与える方が効率的。カール（二頭）だけだと前面しか育たず不均衡になる。
 - 適用：アイソレーション帯（後半）に1種目。初回は軽め（10kg前後）でフォーム習得→漸進で15–20kgへ。肘に負担が出やすいのでネガティブ2〜3秒・肘固定・痛みが出たら即軽量化。器具がなければナロー腕立て（自重）で代替可。
 - ※根拠：6/20は二頭（カール）のみで三頭の直接刺激がゼロだったため、6/21から補完。
+
+### Q4-6. 筋肥大に最適なレップ数・重量は？
+
+**A.** 「限界近くまで追い込めば」重量域は広く有効。8〜12回（≒70〜85%1RM）は時間効率の良い実用域だが、それ自体が魔法の数字ではない。
+
+- 理由：全筋肥大では高負荷（>60%1RM）と低負荷（<60%1RM）で差が出ない（いずれも限界近くで揃えた場合）。重量単体は肥大の決定因子ではなく、近failureの刺激が効く。重い帯は神経・最大筋力に、軽い帯は関節保護に有利という棲み分け。
+- 適用：チェストプレス等の主役種目は8〜10回で限界近くに来る重さを選び、前回超え（漸進過負荷）を一点入れる。
+- ※根拠：Schoenfeld et al. 2017, J Strength Cond Res 31(12):3508–3523（高/低負荷メタ分析＝全筋肥大は同等）。ACSM 2009ガイドラインは肥大に70〜85%1RM・8〜12回を推奨。
+
+### Q4-7. どこまで追い込むべき？（RIR・限界手前）
+
+**A.** 限界の1〜3回手前（RIR1〜3）で止めれば、完全限界（0RIR）と同等の肥大が得られ、疲労・回復負担は小さい。
+
+- 理由：肥大はfailureに近づくほど増えるが0〜3RIR帯で頭打ち（線形ではない）。鍛錬者では1〜3RIRと0RIRで肥大差なし。毎セット完全限界は疲労と回復コストが増えるだけで上乗せが乏しい。
+- 適用：3連続の胸＋このあとランのような日は、序盤〜中盤をRIR1〜2で止めて疲労を管理し、最後の1セットだけ0〜1RIRに寄せる。脚は走るので追い込まない。
+- ※根拠：Robinson et al. 2024, Sports Med 54(9):2209–2231（proximity-to-failureメタ回帰＝近いほど肥大↑だが頭打ち）；Refalo et al. 2022, Sports Med（メタ分析）／2024, J Sports Sci（8週RCTで1〜2RIR＝failure同等）。
 
 ---
 
