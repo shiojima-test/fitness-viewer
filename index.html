@@ -1,5 +1,2516 @@
-{
-  "message": "Bad credentials",
-  "documentation_url": "https://docs.github.com/rest",
-  "status": "401"
-}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Fitness Viewer v3.53</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#F5E4C4; --bg2:#efdcb6; --card:#fffaf0; --line:#e0cfa6;
+    --text:#2d3439; --muted:#8a7d63; --accent:#3AABA8; --accent2:#E88A0A; --thead:#fbe8c9;
+    --ok:#2e9e6b; --none:#a99a7d; --miss:#cbb994; --today:#fff2da;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:"Meiryo","メイリオ",sans-serif; line-height:1.7; font-size:15px;}
+  #gate{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px;}
+  #gate h1{font-size:18px; margin:0; font-weight:700}
+  #gate p{margin:0; color:var(--muted); font-size:13px; text-align:center}
+  #pin{width:184px; text-align:center; font-size:30px; letter-spacing:14px; padding:12px 0 12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--text); outline:none;}
+  #pin:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(58,171,168,.18)}
+  #gateBtn{background:var(--accent); color:#fff; border:none; font-weight:700; padding:12px 30px; border-radius:12px; font-size:15px; cursor:pointer;}
+  #gateErr{color:#c0392b; font-size:13px; min-height:18px; margin:0}
+  #app{display:none; max-width:none; margin:0 auto; min-height:100vh; background:var(--bg)}
+  html{height:100%}
+  /* 週カレンダー表示時のみ：PC/iPadはページ全体を固定し、スクロールはセル内(overflow:auto)だけに */
+  @media(min-width:641px){
+    body.calfix{height:100dvh; overflow:hidden}
+    body.calfix #app{height:100dvh; min-height:0; overflow:hidden}
+  }
+  header.top{position:sticky; top:0; z-index:30; background:var(--bg); border-bottom:1px solid var(--line); padding:5px 16px 0; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .ttl{display:flex; align-items:baseline; gap:6px; flex:0 0 auto}
+  .ttl b{font-size:14px}
+  .ttl span{font-size:10px; color:var(--muted)}
+  .tabs{display:flex; gap:4px; flex:1 1 auto; justify-content:flex-end}
+  .tab{flex:0 0 auto; min-width:96px; text-align:center; padding:6px 10px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-size:13px; font-weight:700; border-bottom:3px solid transparent; font-family:inherit;}
+  .tab.active{color:var(--text); border-bottom-color:var(--accent)}
+  .subnav{display:flex; gap:6px; margin:4px 0 12px; flex-wrap:wrap}
+  .subnav button{flex:0 0 auto; padding:7px 15px; border:1px solid var(--line); background:var(--card); color:var(--muted); font-size:13px; font-weight:700; border-radius:999px; cursor:pointer; font-family:inherit}
+  .subnav button.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .subhint{font-size:12px; color:var(--muted); margin:-4px 0 12px}
+  .openfull{display:inline-block; margin:0 0 14px; padding:9px 15px; background:#fff7e6; border:1px solid var(--accent2); color:#7a4a08; border-radius:10px; text-decoration:none; font-size:13px; font-weight:800}
+  .openfull:active{background:#ffeccc}
+  #events{max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:14px;}
+  .evcard{background:var(--card); border:1px solid var(--line); border-left:6px solid var(--accent2); border-radius:14px; padding:16px 18px;}
+  .evhd{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .evbadge{flex:0 0 auto; min-width:62px; text-align:center; background:var(--accent2); color:#fff; border-radius:12px; padding:8px 8px; line-height:1.12;}
+  .evbadge b{display:block; font-size:26px; font-weight:800}
+  .evbadge span{font-size:10px; opacity:.95}
+  .evttl{font-weight:800; font-size:17px; color:var(--text)}
+  .evwhen{font-size:12px; color:var(--muted); margin-top:3px}
+  .evbody{font-size:13.5px}
+  .evbody ul{margin:8px 0 0; padding-left:20px}
+  .evbody li{margin:3px 0}
+  .evbody strong{color:#b5680a}
+  .evcard.is-soon{border-left-color:#d23b3b}
+  .evcard.is-soon .evbadge{background:#d23b3b}
+  .evcard.is-today .evbadge{background:var(--accent)}
+  .evcard.is-done{opacity:.6}
+  .evcard.is-done .evbadge{background:var(--none)}
+  .ev-empty{color:var(--muted); text-align:center; padding:30px 0}
+  .evhd .pl-now{background:var(--accent); color:#fff; font-size:11px; font-weight:800; padding:2px 9px; border-radius:9px}
+  .evhd .pl-fut{background:var(--accent2); color:#fff; font-size:11px; font-weight:800; padding:2px 9px; border-radius:9px}
+  .evhd .pl-pst{background:var(--none); color:#fff; font-size:11px; font-weight:700; padding:2px 9px; border-radius:9px}
+  .plbody ul{margin:4px 0 0; padding-left:18px}
+  .plbody li{margin:3px 0; font-size:12.5px; line-height:1.6}
+  .plbody strong{color:#b5680a}
+  .evplan{margin-top:14px; border-top:1px dashed var(--line); padding-top:12px}
+  .evplan .pl-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:10px}
+  .plday{border:1px solid var(--line); border-radius:11px; margin-top:8px; background:#fffdf8; overflow:hidden}
+  .plday .pld-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--bg2); padding:7px 12px; border-bottom:1px solid var(--line)}
+  .plday .pld-t{font-weight:800; font-size:15px; color:#5a4a2e; flex:1 1 auto}
+  .plday .pl-now{background:var(--accent); color:#fff; font-size:9px; font-weight:700; padding:1px 6px; border-radius:8px}
+  .plday .pl-w{font-size:11px; font-weight:800; color:var(--accent); background:#eaf6f5; padding:1px 8px; border-radius:8px}
+  .plday .pl-w.pl-no{color:var(--miss); background:#f3ecda}
+  .plday .pld-b{padding:10px 15px 13px}
+  .plday .pld-b ul{margin:0; padding-left:18px}
+  .plday .pld-b li{margin:5px 0; font-size:14.5px; line-height:1.75}
+  .plday .pld-b strong{color:#b5680a}
+  .plday.is-today{border-color:var(--accent)}
+  .plday.is-today .pld-h{background:var(--today)}
+  .plday.is-past{opacity:.55}
+  .plday.is-evt{border-left:5px solid var(--accent2)}
+  .plday.is-evt .pld-h{background:#fff4e3} .plrow .pl-tr{flex-basis:auto} .plrow .pl-m{flex-basis:100%; order:3} }
+  main{padding:12px 16px}
+  @media(min-width:760px){ main{padding:12px 32px} }
+  #toc{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:22px;}
+  #toc .toc-h{font-size:12px; color:var(--accent2); font-weight:800; margin-bottom:8px}
+  #toc a{display:block; color:var(--text); text-decoration:none; font-size:13px; padding:5px 0; border-bottom:1px dashed var(--line)}
+  #toc a:last-child{border-bottom:none}
+  .md{max-width:1080px; margin:0 auto; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px}
+  @media(min-width:760px){ .md{padding:28px 32px} }
+  .md h1{font-size:21px; border-bottom:2px solid var(--line); padding-bottom:10px; margin:4px 0 18px}
+  .md h2{font-size:17px; color:#1f7f7d; margin:28px 0 12px; border-left:4px solid var(--accent); padding-left:11px}
+  .md h3{font-size:15.5px; margin:24px 0 8px; scroll-margin-top:130px; font-weight:700}
+  .md blockquote{margin:14px 0; padding:10px 16px; background:var(--bg2); border-left:3px solid var(--accent2); color:var(--muted); font-size:13px; border-radius:0 10px 10px 0;}
+  .md table{border-collapse:collapse; width:100%; font-size:12.5px; margin:14px 0; display:block; overflow-x:auto}
+  .md th,.md td{border:1px solid var(--line); padding:7px 10px; text-align:left; white-space:nowrap}
+  .md th{background:var(--thead); color:#b5680a}
+  .md tr:nth-child(even) td{background:#fffdf8}
+  .md hr{border:none; border-top:1px solid var(--line); margin:24px 0}
+  .md ul{padding-left:21px} .md li{margin:4px 0}
+  .md strong{color:#1f2a30}
+  .md code{background:var(--bg2); padding:1px 6px; border-radius:6px; font-size:12px; color:#9a5a00}
+  /* 週ビュー */
+  .weeknav{display:flex; align-items:center; justify-content:center; gap:14px; margin:0 0 5px}
+  .weeknav button{background:var(--card); border:1px solid var(--line); color:var(--text); font-size:16px; width:30px; height:30px; border-radius:9px; cursor:pointer; font-family:inherit}
+  .weeknav button:active{background:var(--bg2)}
+  .weeknav .wl{font-size:14px; font-weight:800; min-width:170px; text-align:center}
+  .calwrap{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; overflow-x:auto; margin-bottom:8px}
+  table.cal{border-collapse:collapse; width:100%; table-layout:fixed}
+  table.cal th,table.cal td{border:1px solid var(--line); vertical-align:top}
+  table.cal thead th{background:var(--thead); color:#7a4a08; font-size:13.5px; padding:8px 5px; text-align:center; position:sticky; top:0; line-height:1.35}
+  table.cal th.sec,table.cal td.sec{width:78px; background:var(--bg2); font-weight:800; font-size:13px; text-align:center; vertical-align:middle; position:sticky; left:0; z-index:2; color:#5a4a2e}
+  table.cal thead th.sec{z-index:3}
+  table.cal th.today,table.cal td.today{background:var(--today)}
+  table.cal thead th.today{box-shadow:inset 0 -3px 0 var(--accent2)}
+  table.cal td:not(.sec):not(.wt){height:calc((100vh - 270px)/6); height:calc((100svh - 270px)/6); min-height:56px; padding:0}
+  .cell{font-size:13px; line-height:1.55; padding:8px 9px; height:100%; box-sizing:border-box; overflow:auto}
+  .cell blockquote{margin:6px 0 0; padding:5px 9px; border-left:3px solid #c98a2e; background:#fbf3e6; border-radius:0 7px 7px 0; font-size:11.5px; line-height:1.5; color:#5a4a2e}
+  .cell blockquote p{margin:2px 0}
+  .cell blockquote strong{color:#b5680a}
+  .cell ul{margin:1px 0; padding-left:14px}
+  .cell li{margin:1px 0}
+  .cell strong{color:#1f2a30}
+  .cell .empty{color:#c9b896}
+  .cell .none{color:var(--none); font-weight:700}
+  td.wt{font-size:14px; font-weight:800; text-align:center; vertical-align:middle; color:#1f2a30; padding:6px; height:42px}
+  .cc{position:relative; height:220px}
+  .cc canvas{width:100%!important; height:100%!important}
+  .chartbox{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 16px 8px; margin-bottom:18px}
+  .chartttl{font-size:13.5px; font-weight:800; margin-bottom:8px; color:#5a4a2e}
+  .updated{color:var(--muted); font-size:10px; text-align:right; margin-top:6px}
+  @media(max-width:640px){
+    header.top{gap:8px}
+    .tab{min-width:auto; padding:6px 7px; font-size:12px}
+    main{padding:8px}
+    .weeknav .wl{min-width:120px; font-size:13px}
+    table.cal{min-width:1080px}
+    table.cal th.sec,table.cal td.sec{width:52px; font-size:11px}
+    table.cal thead th{font-size:11.5px; padding:6px 3px}
+    table.cal td:not(.sec):not(.wt){height:auto; min-height:0}
+    .cell{height:auto; overflow:visible; font-size:11.5px; line-height:1.5; padding:6px 7px}
+    .cell blockquote{font-size:10.5px; padding:4px 7px}
+    .calwrap{-webkit-overflow-scrolling:touch}
+  }
+  /* ---- スマホ(<=640px) 週表示：日付ごと縦リスト／日付ヘッダを上部固定／各行にセクション名を併記 ---- */
+  @media(max-width:640px){
+    body.calfix{height:100dvh; overflow:hidden}
+    body.calfix #app{height:100dvh; min-height:0; overflow:hidden; display:flex !important; flex-direction:column}
+    body.calfix header.top{flex:0 0 auto}
+    body.calfix main{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:8px}
+    body.calfix #content{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden}
+    body.calfix .weeknav{flex:0 0 auto; margin-bottom:6px}
+    body.calfix .updated{display:none}
+    .mlist{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-right:2px}
+    .mday{margin-bottom:14px; border:1px solid var(--line); border-radius:12px; background:var(--card)}
+    .mday.tday{border-color:var(--accent2); box-shadow:0 0 0 1px var(--accent2)}
+    .mdate{position:sticky; top:0; z-index:5; background:var(--thead); color:#7a4a08; font-weight:800; font-size:14px; padding:8px 12px; border-bottom:1px solid var(--line); border-radius:11px 11px 0 0}
+    .mday.tday .mdate{background:#ffe6c2}
+    .mdate .tbadge{background:var(--accent2); color:#fff; font-size:10px; font-weight:700; padding:1px 7px; border-radius:10px; margin-left:8px; vertical-align:middle}
+    .mrow{display:flex; align-items:stretch; border-top:1px solid var(--line)}
+    .msec{flex:0 0 64px; background:var(--bg2); color:#5a4a2e; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; text-align:center; padding:6px 4px; border-right:1px solid var(--line)}
+    .mcell{flex:1 1 auto; min-width:0}
+    .mwt{display:flex; align-items:center; font-weight:800; color:var(--accent); font-size:15px}
+    .mempty{padding:24px 12px; color:var(--muted); text-align:center}
+  }
+  .timetag{display:inline-block;font-size:9px;line-height:1.5;background:var(--accent);color:#fff;padding:0 5px;border-radius:7px;margin:0 0 3px 0;font-weight:700;white-space:nowrap;letter-spacing:.02em}
+  #rvModal{position:fixed;inset:0;background:rgba(31,42,48,.55);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:36px 14px;overflow:auto}
+  #rvModal.show{display:flex}
+  .rvcard{background:var(--card);border:1px solid var(--line);border-radius:14px;max-width:920px;width:100%;padding:8px 20px 22px;position:relative;box-shadow:0 12px 44px rgba(0,0,0,.28)}
+  #rvClose{position:absolute;top:6px;right:10px;border:0;background:transparent;font-size:26px;line-height:1;color:var(--muted);cursor:pointer}
+  .rvcard .md h2{font-size:16px;color:#fff;background:var(--accent);padding:7px 12px;border-radius:8px;margin:14px 34px 12px 0}
+  .rvcard .md h3{font-size:14px;margin:14px 0 6px;padding-left:9px;border-left:4px solid var(--accent2)}
+  .rvcard .md ul{margin:5px 0 9px;padding-left:20px}
+  .rvcard .md li{margin:3px 0}
+  .rvcard .md hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+  .rvcard .md strong{color:var(--text)}
+  /* iPad/PC：日別モーダルを大きく・文字も読みやすく */
+  @media(min-width:700px){
+    /* 横幅は画面いっぱい・文字はカレンダーセルと同じ13px */
+    #rvModal{padding:24px 12px}
+    .rvcard{max-width:98vw;padding:14px 40px 34px}
+    .rvcard .md h2{font-size:16px;padding:7px 12px}
+    .rvcard .md h3{font-size:14px}
+    .rvcard .md li,.rvcard .md p{font-size:13px;line-height:1.6}
+  }
+  @media(min-width:1100px){
+    #rvModal{padding:28px 16px}
+    .rvcard{max-width:98vw;padding:18px 56px 40px}
+    .rvcard .md h2{font-size:16px}
+    .rvcard .md h3{font-size:14px}
+    .rvcard .md li,.rvcard .md p{font-size:13px;line-height:1.6}
+  }
+  .dhead{cursor:pointer}
+  th.dhead:hover{text-decoration:underline}
+  .mdate.dhead::after{content:" ▾";font-size:11px;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h1>Fitness Viewer</h1>
+  <p>4桁のPINを入力してください</p>
+  <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
+  <button id="gateBtn">ひらく</button>
+  <p id="gateErr"></p>
+  <p style="opacity:.45">v3.53</p>
+</div>
+
+<div id="app">
+  <header class="top">
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.53</span></div>
+    <div class="tabs">
+      <button class="tab active" data-t="week">週カレンダー</button>
+      <button class="tab" data-t="charts">推移グラフ</button>
+      <button class="tab" data-t="log">記録</button>
+      <button class="tab" data-t="insights">知の財産</button>
+      <button class="tab" data-t="events">イベント</button>
+    </div>
+  </header>
+  <main>
+    <div id="toc"></div>
+    <div id="content"></div>
+    <div class="updated" id="built"></div>
+  </main>
+</div>
+
+<div id="rvModal"><div class="rvcard"><button id="rvClose" aria-label="閉じる">×</button><div id="rvBody" class="md"></div></div></div>
+
+<script type="text/plain" id="src-log"># デイリーログ（フィットネス記録）
+
+※新しい日を上に追記。手帳と同じ並びで記入。
+※記入フォーマット（7ブロック固定）：### 朝トレ ／ ### 朝食 ／ ### 昼食 ／ ### 夕トレ ／ ### 夕食 ／ ### 夜トレ ／ ### 体重 の順。
+※評価・学び・知識は別ブロックにせず、各セクション（朝トレ〜体重）内に事実へ続けて `> **評価**`／`> **学び**` の引用形式で同居させる。
+※各ブロックは空でも見出しを残す。未実施は「なし」と記入、空欄は「未記録」扱い（リマインダー・週まとめ表が判定に使用）。
+
+---
+
+## ▼ 06/29（月）ラン無し→ジムで本気の追い込み（今週の主力トレ日）／食事は赤字
+
+### 予定（朝に計画）
+- 位置づけ：火（6/30 野球・変則）・水（7/1 居酒屋）がトレ困難なため、**今週の刺激をこの月曜に集中**（events.md 6/29プラン）。流れ：朝食→ジムで追い込み→昼食→夕食。7/7 TANITAまで残り8日。
+- トレ：**ジム・本気の追い込み**。胸を主役に（胸を伸ばす意向）。6/28で背中・脚を追い込み済み（28セット）のため**背中・脚は軽め、胸・肩・腕に重点**。**ダンベル/チェストプレスは実kg×回数×セットを必ず記録**＝胸の漸進管理の起点（6/27・6/28と数値未記録が続いたため）。
+  - 注意（3連続の胸）：6/27チェストプレス＋夜ベンチ、6/28朝チェストプレス＋夜ダンベルベンチ、本日で**胸に触れるのが3セッション連続**。出力が出ていれば前回超え（70kg×10が余裕なら73〜77kgへ）でよいが、**出力低下を感じたら無理に上げない**（重量1段 or トップRIR0〜2で止め、ボリュームは肩・腕で取る）。フォーム維持を優先。
+- 食事：**赤字を作る日。ただし赤字は糖質・脂質で作り、Pは削らない**（P150g維持＝筋肉量55kg死守）。低脂質高P・カーボラスト・主食少なめ。緑茶/酢を毎食（references.md）。
+- P計画（目標150g）：朝35＋トレ後ティゴラ26.4＋昼33＋夕33＋寝る前ティゴラ26.4＝**約153g**（赤字でもPは確保）。
+- サプリ：クレアチン=朝・継続／クアン=トレ前／アシッド=トレ後／カロリミット=本日最こってり食の食前。EPA・マルチ=脂質のある食事に同席。
+- 水分・塩分：通常。6/28が塩分8〜9gとやや高め→本日は水分多めで戻す。
+
+### 朝トレ
+- 未記録
+
+### 朝食
+- ティゴラ（WPI／P26.4g）＋クレアチン（毎日継続・今朝摂取済み）。固形朝食なし＝トレ日・通常日の朝の確立パターンどおり（6/16〜6/25系）。
+- 朝P：約26.4g。
+> **メモ** 赤字日のため固形を入れずティゴラのみで立ち上げは方針に合致。今日のP計画は朝35g前提（約153g）だったが朝がティゴラのみ（26.4g）のため、**P150g維持には昼か夕で+10g前後の上乗せ**（または昼前にプロテインチップス1袋P20.6g）が必要。昼の記録時に調整する。
+
+### 昼食
+- 骨付きチキンのスパイス焼き（カレー粉系・皮付き）＋春雨サラダ（カニカマ・きゅうり）。**ご飯なし**＝赤字日の糖質カットを昼でも実行。食べ順はチキン→サラダのカーボラスト。
+- **カロリミット（4粒）を食前に摂取**＝本日いちばんこってりの固形食（皮付きチキン）にピンポイント配置。夜はプロテインのみ予定のため、こってり食＝この昼で確定（insights Q2-3どおり的中）。
+- 昼P：骨付きチキン＋カニカマで**約30g前後**（皮付きで脂質は中程度。脂質もご飯なしのこの昼で取り切る）。緑茶/酢を添える方針（references.md）。
+- **追加：BODY STAR プロテインチップス1袋（P20.6g）**を昼に摂取＝Pの底上げ（午前/午後に分けず昼で1袋）。
+> **P150g設計（更新）** 朝ティゴラ26.4＋昼チキン約30＋昼チップス20.6＝**約77g**。夜トレ後アシッド20＋寝る前ティゴラ26.4を足して**約123g**＝まだ約27g不足。**昼にティゴラ（WPI26.4g）を1杯足すと約150gに着地**（WPIは脂質・糖質ほぼ0で赤字方針に最適）。→昼ティゴラを推奨。飲めない場合は夜トレ後をアシッド＋ティゴラの2杯にして埋める。Pは赤字でも削らない（筋肉量55kg維持の生命線）。
+
+### 夕トレ
+- 未記録
+
+### 夕食
+- 未記録
+
+### 夜トレ
+- 未記録
+
+### 体重
+- **73.8kg（朝・起床後／空腹・排尿後の最軽条件帯）**。朝の値＝1日で最も軽く出る条件帯。判定は単日でなく同条件（朝どうし）の週平均で追う（6/27・6/28は夜74.5kgの記録のため直接比較しない）。
+> **メモ** 本日は赤字＋ジム追い込みで日中に水分が抜け、夜も下振れする可能性（脂肪減ではなく水分変動）。7/7 TANITAに効くのは単日のブレでなく週平均の方向。
+
+---
+
+## ▼ 06/28（日）雨でラン不可→朝 筋トレ追い込み＋夜家トレ（夕食=冷やし中華）
+
+### 予定（前夜に計画）
+- 流れ：朝食→朝ジム→朝ラン→昼食→夕食（冷やし中華）→夜家トレ。今日(6/27)が高脂質だったので低脂質でならす＋7/7前で塩分控えめ。
+- 食べ方の原則（ターザンメモ／references.md）：タンパク質・具を先→野菜→糖質（麺）は最後（カーボラスト）。青魚優先（男性はDHA変換率低）。酢の物・緑茶（内臓脂肪・血糖）。発酵食品。主食少なめ（ロカボ）。
+- 朝食（筋トレ追い込み前）：ローソン蒸し鶏（P30.3・脂2.1・糖0.2・141kcal）＋**おにぎり半分〜1個 or バナナ1本**（追い込みは筋グリコーゲンを使い切りやすいので糖質を少し足す）。今日は雨でランなし＝朝に糖質を入れて問題なし。直前のドカ食いは避け水分も。
+- 昼食（高P・低糖質＝糖質を夜に集約）：豚しゃぶサラダ＋茶碗蒸し or 焼き魚定食＋酢の物＋緑茶。麺は入れない。
+- 夕食（冷やし中華）：具（蒸し鶏・卵・ハム・チャーシュー）を先→麺は最後。タンパク増し＋納豆/冷奴でP底上げ。酢を効かせタレはかけ過ぎない。冷たい麺＝レジスタントスターチで血糖ゆるやか。スープ/濃いタレは控えめ（塩分）。
+- タンパク質計画（目標150g・超過設計）：朝（蒸し鶏30.3＋糖質源）約32＋朝トレ後ティゴラ26.4＋昼33＋夕（冷やし中華＋タンパク増し＋納豆）28＋夜トレ後アシッド20＋寝る前ティゴラ26.4＝**約170g**。多ければ寝る前ティゴラを調整。
+- トレ：**雨でラン不可**。朝＝筋トレを追い込む（ジムor自宅／脚を入れるなら週で唯一この日。RIR0〜1まで攻めてよい、フォーム維持の範囲で）。夜＝家トレ＝自重A（腕立てワイド20×5・ナロー20×5・腹筋クロス20×5、回復寄り）。麺(冷やし中華)は夜トレ後に食べてグリコーゲン補給に当てる。
+- サプリ：クレアチン朝・継続／クアン=夜トレ前（任意）／アシッド=夜トレ後／カロリミット=本日いちばんこってり食の食前（低脂質設計なら使わなくても可）／EPA・マルチ=魚等に同席。緑茶・酢を食事に。
+- 今日のゴール：低脂質高Pで脂質をならし、麺の日でもP150g超＋糖質を夜に集約。7/7前の塩分も抑える。
+
+### 朝トレ
+- ジム（パターンC・脚の日／追い込み）。チェストプレスから開始。
+  - チェストプレス　54kg×10×3 → 70kg×10×3（計6セット）。
+  - レッグプレス（脚の日の本命）　79 / 93 / 93 / 86kg × 各10。**グルートマシンが当ジムから撤去されており使用不可**→レッグプレスで殿筋を代替し追加追い込みへ。
+  - レッグプレス（殿筋・ハム狙い／グルート代替）　93kg×12×3（足は高め・広めスタンス・ネガティブ3秒・RIR1）。脚はレッグプレス計7セット（本番4＋殿筋追加3）で殿筋ボリュームを確保。
+  - 背中・ラットプルダウン：63kg×10 → **70kg×8×3（70kg初挑戦・自己ベスト更新／「きつい」＝RIR0〜1）** → 57kgドロップ×15 → 57kg×15（短インターバル燃やし切り・1セットで終了）。本番重量を63→70kgへ更新（初挑戦で70kg×8×3完遂）。**ラット計5セット（70×8×3＋57×15×2）**＝高重量適応＋代謝ストレス両取りで広背は仕上がり。
+  - 背中・シーテッドロー：63kg×10 → **70kg×8×3（RIR0〜1）**。ローも本番重量を70kgで確立。ラット（縦の引き＝広がり）＋ロー（横の引き＝厚み）の両方を70kgで完了＝背中は縦横とも自己ベスト帯。
+  - 肩・ショルダープレス：36kg×10 → 50kg×10 → 43kg×10 ののち **57kg×10×3を追加（57kgが新・本番重量／50kg余裕からの即時UP）**。計6セット。
+  - トレ後：プロテイン ティゴラ（WPI／P26.4g）摂取済み。
+> **評価** 朝トレ＝大ボリュームで完了（胸6・脚7・ラット5・ロー4・肩6＝計28セット）。雨でランがなく脚を温存する必要のない"フル装備の脚の日"で、余力を全部トレに回せたのが大きい。
+
+> **学び** 本日は自己ベスト更新が複数。背中はラット・シーテッドローとも **70kg×8×3** で確立（従来63kg）。肩ショルダープレスは50kg×10が余裕→ **57kg×10×3** へ重量UP。胸は70kg×10×3だが6/27＋本日＋6/29で3セッション連続帯のため、明日6/29夜ベンチBは胸の出力低下を感じたら無理に上げない（重量1段 or セット4→3で背中・肩・腕へ）。
+
+> **次の一手** 次回以降の漸進：背中70kg定着→73kgへ／肩57kg定着→64kgへ。栄養はトレ後ティゴラ（P26.4）済→昼は高P低糖質、夜の冷やし中華は具先・麺後（カーボラスト）。夜の自重Aは朝の大ボリュームを踏まえ回復寄りに留め無理に潰さない。P目標150g超は維持。
+
+### 朝食
+- 筋トレ追い込み前：ローソン蒸し鶏（P30.3・脂2.1・糖0.2・141kcal）＋もち麦昆布おにぎり（P5.1・脂2.2・糖質28.8・食物繊維8.1・172kcal）。
+- 朝食P＝約35g。糖質は食物繊維リッチなおにぎりで補給＝血糖ゆるやか（ターザンメモR1/R5）。追い込みの燃料を確保。
+
+### 昼食
+- 昼前の補食：プロテインチップス（BODY STAR）**1袋まるごと＝P20.6g**（脂5.2・糖5.9・163kcal）を昼前に完食。※当初「半量」と記録→本人申告により1袋完食へ訂正。午後の追加補食はなし。
+> **学び** 本来は1袋を午前・午後へ小分けが理想（1回20〜40gの吸収有効域／core.md・insights Q1-8）。本日は昼前に1袋完食＝Pの前倒し摂取に。1食20.6gは吸収有効域の上限内で問題なし。午後の補食ぶんが前倒しになった形のため夕方は無理に足さない。昼の固形メインはこのあと。
+- 昼メイン（コンビニ）：①たんぱく質が摂れる鶏むね肉サラダ（P21.8・脂10.9・糖2.2・塩2.7・199kcal）＋添付**アマニ油入りドレッシング大さじ1**（37kcal・P0.3・脂3.0[うちオメガ3 1.1g]・糖2.3・塩0.7）　②明治ミルクプロテイン脂肪0 ココア430ml（P30.0・脂0・糖17.4・塩0.38・191kcal）　③カニカマ70g（P6.0・脂0.6・糖6.5・塩1.2・56kcal）。食べ順＝具・タンパク質→野菜（糖質は夜の冷やし中華へ温存）。マヨは使わずアマニ油ドレを採用。
+- 昼合計：**P約58g**・脂質14.5g・糖質28.4g・塩分約5.0g・約483kcal。
+> **学び（油の質）** ドレッシングをニップン"おいしいアマニ油入り"＝オメガ3（α-リノレン酸1.1g/大さじ1）入りの"いい油"を選択。マヨ（大さじ1で脂9〜11g・オメガ6寄り）より脂質量・質とも上で、ターザンメモR5/条32の"いい油"に合致。ただしALA→EPA/DHA変換は男性で低いため、直接DHA源は青魚を別途優先（R3）。
+
+> **注意（塩分）** 昼で塩分約5gとやや高め（主因＝サラダ2.7＋カニカマ1.2）。夜の冷やし中華はタレを半分〜2/3に抑え、明日にかけて水分で戻す（7/7前の塩分対策）。
+
+### 夕トレ
+- 未記録
+
+### 夕食
+- 19:30 冷やし中華（麺の日）。具に**ほぐしサラダチキン多め**でタンパク質増し、**枝豆**を追加（植物性P＋食物繊維で満足感UP）。
+- **カロリミット**を本日いちばんの糖質食（冷やし中華）に合わせて摂取（設計どおり）。
+> **評価** 麺の日でも具のサラダチキンでP確保、枝豆で満足感と食物繊維を補強＝糖質中心の食事を"具で支える"良い構成。カロリミットのタイミングも正しい。
+> **塩分（確定）** 冷やし中華のタレは元々少量タイプのため**全量使用＝過剰ではない**。本日合計の塩分目安は8〜9g前後（昼約5.0＋夕の麺・具で2.5〜3.5）。目標6g台よりやや高めだが、本日は28セット追い込み＋発汗大でナトリウム許容は広く問題視不要。
+> **明日の調整** 7/7まで6日。①水多め（Na希釈・排出促進）②みそ汁/漬物/練り物/麺のいずれか1つ減で6g台へ③カリウム（枝豆・野菜・きのこ・海藻）継続。
+
+### 夜トレ
+- ダンベルベンチ＝**いつもの重量・回数で実施**（胸を育てたい意向を受け今夜を"胸の日"に設定／明日6/29ベンチBは軽め=バックオフで2日連続ハードを回避）。※過去ログに標準重量の数値記録がないため定性記録。**次回から実kgを残し胸の漸進管理に使う**。
+- トレ後：**アシッド（P20g）**＝確立パターンの定位置（夜トレ後の定番／ロイシンでmTOR起動）。
+- 締め：就寝前プロテインは無し（本日P充足のため）。**アイス・ビールは検討の末どちらも摂らず**＝追加の糖質/脂質を入れる理由がなく、ここで締め。
+> **メモ** 「胸はやった感が薄い／背中は筋肉痛」は効き差ではなく刺激の新しさの差（背中は70kg初挑戦＝未経験刺激、胸は慣れた重量＝repeated bout）。筋肉痛は成長指標ではない。胸肥大のレバー＝漸進性過負荷（70×10余裕なら73〜77kgへ）＋ストレッチ種目（フライ/深く下ろすDBプレス）＋トップRIR0〜2。
+> **就寝前P** 本日P約165〜170gで目標150g超過のため就寝前の追加は不要（夜トレ後アシッドがその役割を兼ねる）と判断。
+
+### 体重
+- **74.5kg（夜・入浴後／夕食=冷やし中華後・28セットトレ後・塩分8〜9gの日）**。1日でいちばん重く出る最重条件（糖質グリコーゲン＋結合水・トレ後の水分保持・Na保水・食後）が重なった数値で脂肪増ではない。入浴後でも食後・トレ後の水分増が発汗減を上回る。
+> **評価** 6/27夜も同条件で74.5kg＝同条件での再現性であり停滞ではない。単日判定せず同条件（夜どうし/朝どうし）の週平均で追う。7/7測定に効くのは日々の水分ブレでなく週平均の方向。明日6/29は赤字＋トレで水分が抜け一時的に下振れする可能性（脂肪減ではない）。
+
+---
+
+## ▼ 06/27（土）ラン再開日（朝ジム＋ラン＋夜ベンチ／3本立て）
+
+### 予定（朝に計画／日中に更新）
+- ランがやれる日。雨がいつ降るか不明のため朝のうちに走る。流れ：朝コンビニ→ストレッチ長め→ジムで筋トレ→ラン→昼ごはん（肉の定食）→仕事→夜マクド1個→家でベンチ。
+- トレ（最終確定）：朝＝ジム（胸チェストプレス・肩・背中・コア／脚は外しランに残す）＋ラン再開（6/19以来）。夜＝家でベンチ（パターンB）も実施＝3本立て。
+  - 夜ベンチの胸調整：朝チェストプレスで胸を使っているため、夜のダンベルベンチプレスは重量1段控えめ or セット4→3。追い込みは背中・肩・腕で取る。胸の出力低下を感じたら無理に上げない（明日6/28もトレ・月6/29もベンチのため）。
+  - ラン：Z2＝会話できる強度。筋トレ直後スタートで心拍が上がりやすいので最初の1kmを特にゆっくり（Q3-1）。再開初回ゆえ距離2〜3km/20〜25分の短め、きつければ歩き混ぜOK。
+- 朝食（実績は朝食欄）：おにぎり＋チキン＋ザバスでP36.2g。
+- 昼食（決定）：肉の定食（ご飯少なめ・軽め）でP約30g。
+- 夕食（決定）：マクドナルド**1個**（patty多めの種類でP約20g・ポテトなしで脂質を抑える）。
+- タンパク質計画（目標150g・最終）：朝36.2＋ラン後ティゴラ26.4＋昼約30＋マクド1個約20＋夜ベンチ後アシッド20.0＋寝る前ティゴラ26.4＝**約159g**。**ジム→ランは水分のみ。ラン前にプロテインを足さない（走るとお腹が痛くなるため）。プロテインはラン後に回す。**朝食でザバスP20gは飲み終えており空腹走ではない。
+- サプリ計画：クレアチン=朝・継続／カロリミット4粒=本日最こってり＝夜マックの食前に1回（昼では使わない）／EPA・DHA・マルチ=脂質のある食事に同席／クアン=夜ベンチ前／アシッド=夜ベンチ後。
+- 今日のゴール：ランを無事に再開し持久の立て直しに着手。胸は夜控えめにして来週のベンチ4回（月木金日）に備える。P159gで150g確保。
+
+### 朝トレ
+- ジム（脚なし）：チェストプレス 50kg×10×3 → 57kg×10、以降追い込み（RIR0〜1で反復）。他種目（ショルダープレス／ラットプル／ロー等）は申告なしで数値未記録。
+- ラン（屋外・お腹が痛くなり分割／6/19以来の再開）：
+  - ①11:04–11:10　1.01km／5'58"/km／平均HR125
+  - ②11:10–11:14　ウォーク 297m（12'38"/km／HR101）
+  - ③11:14–11:19　1.02km／5'26"/km／平均HR146
+  - ④11:22–11:25　0.47km／6'22"/km／HR128
+  - 計：ラン約2.5km＋ウォーク0.3km。お腹が痛くなり十分に走れず途中で区切る形に。
+- ラン後：ティゴラ（WPI／P26.4g）摂取済み。
+> **学び** ラン前の直前飲食が原因で腹痛→分割に。朝食（おにぎり＋チキン＋ザバス）がラン開始11:04に近すぎた。固形・プロテインはラン30〜60分前までに終え、直前は水分程度にとどめる（insights Q1-7／Q4-2の運用に追記事項）。
+> **評価** 再開初日として「動き続けた」点は達成。ペース5'26〜5'58/HR125〜146はZ2上限寄り＝再開直後はもう少しゆっくりでよい。腹痛は強度でなく飲食タイミングが主因。
+
+### 朝食
+- コンビニでラン前補給。食べる順＝①サラダチキン スモーク（60g／P11.5・脂1.2・70kcal）→②鶏五目おにぎり（P4.7・糖質32.8・171kcal＝ラン燃料／Q1-7）→③ザバス ミルクプロテイン脂肪0 200ml（P20.0・脂0・107kcal）。固形を先に済ませ、ザバスは流し込み。走る30〜60分前に固形を食べ終える。
+- **朝食P合計：約36.2g**。脂質は約3.4gと軽くラン前向き。
+
+### 昼食
+- 自炊（昼）：ご飯＋肉野菜炒め＋セブン「ブロッコリー チキン＆エッグ」（P20.6g）。
+- P内訳の目安：ブロッコリーチキン＆エッグ20.6＋肉野菜炒めの肉10〜15＋ご飯4〜5＝**約P35〜40g**。
+- サプリ：EPA・DHA＋マルチを同席。**カロリミットは昼では使わず、本日最こってり＝夜マックの食前に取っておく**。
+- 食後デザート：クーリッシュ チョコ（125kcal／P1.8・脂4.6・糖質19.1g）。アイスとしては軽め、カロリー枠内。Pはほぼ無しで150gカウント外。
+
+### 夕トレ
+- 未記録
+
+### 夕食
+- 外食（マックから変更）：チキン南蛮＋ご飯少し＋明太春巻き＋野菜＋ビール1杯。
+- P内訳の目安：チキン南蛮25〜30＋明太春巻き4〜6＋ご飯3〜4＝**約32〜40g**。
+- サプリ：カロリミット4粒を食前に摂取（本日最こってり＝揚げ物のこの夕食に的中。昼では使わず夜に回した運用どおり）。
+> **学び** ビール1杯。アルコールはトレ後の回復・筋合成をやや鈍らせるため、夜ベンチをやるなら飲酒前か酔いが回る前に。深酒後は無理にやらない。
+
+### 夜トレ
+- 家でベンチ（パターンB）実施。内容は前回と同じ（定番量）。※重量×回数×セットは申告なしのため詳細未記録。
+- トレ後：アシッド（P20.0g）摂取。寝る前ティゴラは無し（本人判断）。
+
+### 体重
+- 74.5kg（夜・夕食＋ビール＋トレ後）。朝からの増加は糖質（ご飯・おにぎり・春巻き）＋塩分＋ビール＋食後/水分による一時的なもので脂肪増ではない。判定は同条件の週平均で見る。
+
+---
+
+## ▼ 06/26（金）在宅・通常運転初日（雨でラン不可）
+
+### 予定（朝に計画）
+- 在宅日。外食なし＝自炊でコントロール可。出張4連投（6/21〜25）明けの通常運転初日。
+- トレ：朝はストレッチ＋軽い自重（軽め・追い込まない）。夜は久々のベンチ（パターンB）＝1日2回。
+- ラン：雨で不可。持久の立て直し（Z2ラン）は明日以降に持ち越し。
+- タンパク質計画（目標150g）：
+  - 朝：ティゴラ26.4＋クレアチン（継続）。空腹のためプロテインチップス（BODY STAR／P20.6g）を朝の間食 → 朝で約47g
+  - 昼：ゴーヤチャンプル（豚＋卵＋豆腐）＋鮭でP約42〜45g
+  - 夜：トレ後アシッド20.0 → 寝る前ティゴラ26.4
+  - 夕食：パートナーと相談・未定（自炊・軽め想定）。P15前後で150g到達見込み
+  - 見込み：朝47＋昼約42〜45＋トレ後20＋寝る前26.4＝約135〜138g。夕食でP15前後足して150g。届かなければチップスもう1袋が保険
+- サプリ計画：クレアチン=朝・継続／クアン=朝は飲まず夜ベンチ前（10〜15分前）に充てる／カロリミット4粒=本日いちばんこってりの昼（ゴーヤチャンプル＝炒め油＋豚＋ご飯）の食前／EPA・DHA・マルチ=脂質のある昼に同席
+- 今日のゴール：通常運転初日。朝で厚く積む立ち上がりを作り、夜ベンチで漸進を一点入れる。150gは夕食しだいだが朝の積み上げで余裕を持たせる。
+
+### 朝トレ
+- ストレッチ＋軽い自重（軽め・追い込まない）。クアンは飲まず夜ベンチ前に温存。
+
+### 朝食
+- ティゴラ（WPI／P26.4g）＋クレアチン（連日継続中）。
+- プロテインチップス（BODY STAR／P20.6g）を午前・午後に分けて1袋＝1日かけて摂取。
+
+### 昼食
+- ゴーヤチャンプルのみ（鮭なし）。P約25〜30g（計画は鮭ありで42〜45g→鮭なしぶん15g前後少なく着地）。
+- サプリ：カロリミット4粒を食前（本日いちばんこってり＝炒め油＋豚＋ご飯に的中）。EPA・DHA＋マルチビタミン同席。
+
+### 夕トレ
+- なし。
+
+### 夜トレ
+- ベンチ（パターンB）を実施。量はいつもと同じ（定番量）。※具体的な重量×回数×セットは申告なしのため詳細未記録。定番量の基準値は次回数値取得時にcore.mdへ登録予定。
+- トレ前：クアン。トレ後：アシッド（P20.0g）。
+
+### 夕食
+- ゴーヤチャンプル＋鮭＋ご飯（昼と同程度）。P約42〜45g。昼・夕でチャンプル2食＝炒め油が連続。
+
+### 体重
+- **72.8kg（入浴・発汗後）**。出張明け6/24夜74.5kg → 1日で−1.7kg（水分・グリコーゲンが抜けた動き）。通常運転初日として良好。8/31夜72kg目標の射程内。週平均で継続観察。
+
+### タンパク質合計
+- 朝26.4＋チップス20.6＋昼約27＋夕約43＋トレ後アシッド20.0＋寝る前ティゴラ26.4＝**約163g**。**目標150g達成（やや上振れ）**。減量期の超過分は合成頭打ちのため問題なし、取りこぼしなしの着地。
+
+---
+
+## ▼ 06/25（木）日帰り出張（昼読めない日）
+
+### 予定（朝に計画）
+- 日帰り出張。昼は読めない。夕方コンビニで摂取 → 帰宅後に自重トレ → トレ後プロテイン。
+- 昼夜のどこかで吉野家希望（昼/夜は未定）。
+- タンパク質計画：
+  - 朝：ティゴラ26.4＋クレアチン（済）
+  - 昼：読めない（吉野家ならP20〜33／取れなければP枠20目安）
+  - 夕方：コンビニ＝サラダチキン＋脂肪0ドリンク等でP40〜45
+  - 夜：帰宅後トレ → トレ後ティゴラ26.4
+  - 見込み：昼取れず約95g／吉野家入れば約120〜125g／夕・夜を厚めで150射程
+- サプリ計画：カロリミット=今日いちばんこってりする食事（吉野家候補）の食前／クレアチン=朝済・継続／EPA・DHA・マルチ=脂質のある食事と一緒／クアン=本日未使用、夜トレ前に飲むなら開始10〜15分前
+- 今日のゴール：出張明け即・日帰りで疲労想定のため150固執せず、夕方＋夜トレ後で確実に積む。昼が取れれば150狙い。
+
+### 朝トレ
+- なし（出張日。朝はサプリ・プロテインのみ）
+
+### 朝食
+- 起床後（実績）：**ティゴラ（WPI／P26.4g）＋クレアチン（朝摂取済み）**（クレアチンは6/24夜に再開→6/25朝も継続＝筋内再飽和を進行中）
+- **朝P：約26.4g**
+
+> **効果** 出張明け即・日帰り出張の朝を、確実なWPIで土台確保。クレアチンを連日継続できており（6/24夜再開→6/25朝）、出張で空けたぶんの再飽和が順調。今日は昼が読めないため、朝で確実にPを入れておく立ち上がりは妥当。
+
+### 昼食
+- 外食：**チキン南蛮定食（タルタルあり）**。揚げ物＋タルタルで脂質は高めだが、鶏でPはしっかり確保
+- **カロリミット4粒を食前に投下**（揚げ物＋タルタル＋ご飯＝本日いちばんこってりの食事に的中＝Q2-3どおり）
+- 食後：**EPA・DHA＋マルチビタミン**（脂質のある定食と一緒で脂溶性ビタミン吸収◎）
+- 昼P：チキン南蛮の鶏で **約28g前後** ／ **累計：朝26.4＋昼約28＝約54g**
+
+> **評価** 読めなかった昼を外食で確保でき、鶏でPを稼げた。脂質は高めだがカロリミットを最大食の食前に投下して対応＝計画どおり。これで昼が取れたぶん、夜は夕方コンビニ＋帰宅後トレ→ティゴラで150射程。
+
+### 夕トレ
+- なし（移動）
+
+### 夕食
+- 移動中の夕方コンビニ補給（高タンパク低脂質・チキンスティック2本＋脂肪0ドリンク1／脂質合計約5g）
+- **プリマハム サラダチキンスティック ハーブ（67g）**：P12.2g／脂質2.5g／76kcal
+- **プリマハム サラダチキンスティック スモーク（67g）**：P12.7g／脂質2.7g／88kcal
+- **オイコス プロテインドリンク（240ml）**：P25.0g／脂肪0／125kcal
+- **夕方P合計：約49.9g** ／ **累計：朝26.4＋昼28＋夕方49.9＝約104g**
+
+> **評価** 夕方をチキンスティック2本（ハーブ・スモーク）＋脂肪0ドリンクで構成し、低脂質のままP約50gを確保。昼（チキン南蛮）が取れたうえに夕方も積めたため、帰宅後トレ→トレ後ティゴラで約130g、寝る前1本で150g到達が射程。出張明け即・日帰りの条件下では上出来の積み上げ。
+
+- 帰宅後トレ後：**アシッド（P20.0g／ロイシンでmTOR起動）**＝確立パターンの定位置
+- 寝る直前（23時台）：**ティゴラ（WPI／P26.4g）**＝夜間供給
+- **本日最終累計：朝26.4＋昼28＋夕方49.9＋トレ後20＋寝る前26.4＝約150.7g（目標150g達成 ✅）**
+
+### 夜トレ
+- 帰宅後に自重トレーニング実施（クアン未使用・帰宅後トレ）。種目：自重A（ワイド・ナロー・腹筋クロス）のみ（追加種目なし／Apple Watch実測値の記録なし）
+- トレ後：アシッド（P20g）→ 就寝前：ティゴラ（P26.4g）
+
+### 体重
+- 未記録（出張明け・移動日。通常運転に戻るまで判定に使わない＝core.md／insights Q5-2）
+
+---
+
+## ▼ 06/24（水）出張3日目・愛知（昼抜き日）
+
+### 朝トレ
+- ホテル自重A（クアン→自重の確立パターン）。出張連投＋飲み会明けでだるさありのため軽め実施
+- **Apple Watch実測：機能的筋力トレーニング 8:10–8:37／27分36秒／アクティブ93kcal・合計144kcal／平均HR81拍**（名古屋市）
+  | 種目 | 部位 | メニュー |
+  |---|---|---|
+  | 腕立て ワイド | 胸 | 実施 |
+  | 腕立て ナロー | 三頭・腕 | 実施 |
+  | 腹筋 左右クロス | 腹 | 実施 |
+- トレ前：**クアン**（必須アミノ・ほぼ0kcal／開始10〜15分前＝insights Q2-4）
+- トレ後：**ザバス MILK PROTEIN 脂肪0 30g ココア（P30.0g／脂肪0）** ※通常のアシッド28gは出張で手元になく代替
+
+> **効果** 出張中も「クアン→自重→トレ後プロテイン」の確立パターンを維持。だるさのある日でも0kcalのクアンで筋分解を浅くし、トレ後ミルクプロテイン（ロイシン含む）で合成方向へ。6/19・6/21と同系の運用。アシッド不在はザバス脂肪0 30gで代替し役割を確保。
+
+### 朝食
+- 名古屋めし朝食バイキング（昼抜き前提でしっかり＝本日最大食）
+- 主食：きしめん（ひきずり鍋に投入）＋ご飯（朝食時）
+- タンパク質源：**ひきずり鍋1杯（鶏肉多め）**／焼き魚2切れ／八丁味噌煮（牛すじ・根菜）の肉／味噌串カツ1・エビフライ1
+- 副菜：ポテトサラダ
+- **カロリミット4粒を朝食前に投下**（昼抜きで揚げ物＋味噌＋糖質のこの朝が本日最大食＝insights Q2-3どおり）
+- 朝食P：魚＋鶏（おかわり鶏多め）＋味噌煮の肉中心で **約40g前後**
+- 食後：**EPA・DHA＋マルチビタミン**（脂質のある食事と同時帯で吸収◎。食後約15分で摂取＝許容範囲）
+- **朝合計P：トレ後ザバス30＋朝食約40＝約70g**
+
+> **評価** バイキングでも焼き魚・ひきずり鍋（鶏多め）・味噌煮の肉と高タンパク源を主役に選択。揚げ物は串カツ・エビフライ各1で抑制。きしめんは昼抜き日の主食（糖質）として可。カロリミットを本日最大食の食前に的中配置。昼抜きでも朝で約70g積めており、150g設計の土台として理想的な立ち上がり。
+
+### 昼食
+- 昼抜き日の超軽食（炭水化物は抜き、P枠のみ確保）
+- **オイコス プロテインドリンク（240ml）**：P18.0g／脂質0／125kcal
+- **ザバス プロテインバー チョコ（44g）**：P17.2g／脂質12.9g／226kcal
+- **昼P合計：約35.2g** ／ **累計：朝70＋昼35＝約105g**
+
+> **評価** 昼抜き日の「炭水化物は抜くがP枠は確保」を実践。オイコス脂肪0でバーの脂質12.9gを相殺しバランス良好。150gは射程内で、残り約45gは夕の移動食＋必要なら寝る前で到達見込み。
+
+### 夕トレ
+- なし（移動）
+
+### 夕食
+- 移動中の夜食。高タンパク低脂質で締め（3点とも揚げ物なし・脂質合計約4g）
+- **オイコス プロテインドリンク（240ml）**：P18.0g／脂質0／125kcal
+- **プリマハム チキンバー ハーブ（67g）**：P12.2g／脂質2.5g／76kcal（鶏肉・加熱済みそのまま）
+- **カニカマ（辛子明太子入り・すけとうだら／70g）**：P10.0g／脂質1.5g／82kcal
+- **夕P合計：約40.2g**
+- 寝る前：**ティゴラ（WPI／P26.4g）**＋**クレアチン**（出張で空けたぶんを帰宅後から再開＝筋内再飽和へ／core.md）
+- **本日最終累計：朝70＋昼35.2＋夕40.2＋寝る前26.4＝約171.8g**（目標150g達成 ✅）
+
+> **評価** 移動食でも脂肪0ドリンク＋鶏＋魚肉と高タンパク低脂質を徹底。3点で脂質わずか約4g。昼抜き日にもかかわらず夕で約145gまで到達し、寝る前プロテイン1本で150g達成が確定圏。出張最終日の締めとして理想的。
+
+### 夜トレ
+- 帰宅後にもう1本実施＝本日2回目のトレ。自重A（ワイド・ナロー・腹筋クロス）＋**サイドレイズ10回×5セット追加（肩）**
+- **Apple Watch実測：機能的筋力トレーニング 22:36–23:27／50分39秒／アクティブ140kcal・合計233kcal／平均HR74拍**（甲府市）
+
+> **効果** 出張連投＋だるさのある日に1日2回トレ（朝・夜）を達成。夜はサイドレイズで肩も追加し、出張で空いた刺激を取り戻す好内容。寝る前のクレアチン再開＋ティゴラP26.4gで、再飽和と夜間の合成も同時に確保。
+
+### 体重
+- **夜 74.5kg（参考値・判定対象外）**。6/23夜74.4→+0.1kg（誤差レベル）。昼抜きでも糖質（ご飯・きしめん・各プロテイン）でグリコーゲン＋水分が乗るため想定内。出張中につき判定に使わない＝判定は通常運転に戻ってからの夜・週平均で（insights Q5-2）
+
+---
+
+## ▼ 06/23（火）出張2日目・移動
+
+### 朝トレ
+- なし（移動日。ラン・筋トレ不可）
+
+### 朝食
+- 移動しながらの片手リカバリー（前夜飲み会のためアルコール明け回復優先）
+- **ザバス MILK PROTEIN 脂肪0（240ml）**：P25.0g／138kcal／脂質0g／糖質7.4g／塩0.31g
+- **もち麦おむすび 紅しゃけ大葉**：P4.7g／169kcal／脂質2.4g／糖質30.8g／食物繊維2.9g／塩1.5g
+- ＋水分：移動中に水・お茶500ml目安（脱水リカバリー）
+- **朝P合計：約29.7g**（約307kcal／塩分1.8g）
+
+> **効果** アルコール明けの朝を「高タンパク低脂質＋塩分＋軽い糖質」で構成。脂肪0ザバスで胃にやさしくP25g確保、おむすびの塩分1.5gが汁物を外した分の電解質を補填、もち麦の食物繊維2.9gで糖の吸収を緩やかに。揚げ物・菓子パンを避けた回復優先構成。前夜にP約176gと十分摂れているため、朝は量より回復・水分・塩分を優先。
+
+### 昼食
+- フライドチキン＋カレー（揚げ物＋カレー＝本日最大の糖質脂質食と判断）
+- **カロリミット4粒を昼の食前に投下**（夜はコントロール可能なため、最大食の昼に充当＝原則どおり）
+- 食後：EPA・DHA＋マルチビタミン
+- P目安：フライドチキン＋カレーの肉で **約35g前後**（チキンの個数で前後）／ **累計：朝約30＋昼約35＝約65g**
+
+> **評価** こってり食（揚げ物＋カレー）だが、カロリミットを「本日コントロールできない/最大の食事」に合わせる原則どおり昼に投下＝配置は的確。カツカレーとの差は栄養的に僅差で選択自体は問題なし。夜が自分で調整できるので、夜を軽めの高タンパク低脂質に寄せれば1日トータルは維持モードの範囲に収まる。
+
+### 夕トレ
+- なし
+
+### 夕食
+- 電車移動中の夜食（コンビニ）。夜はコントロール可と判断し高タンパク低脂質で締め
+- **チキン&エッグサンド（胚芽パン・トマトソース）**：P20.1g
+- **ザバス MILK PROTEIN 脂肪0 30g（カフェラテ）**：P30.0g／脂肪0
+- 寝る前：**ザバス MILK PROTEIN 脂肪0 ストロベリー（200ml）**：P20.0g／脂肪0（就寝前の筋分解対策）
+- **夜＋寝る前P：約70g**
+
+> **評価** 昼がこってり（揚げ物＋カレー＋カロリミット投下）だったぶん、夜を脂肪0ドリンク＋高タンパクサンドで的確にリカバリー。おにぎり系の糖質中心品を避けPを稼ぐ選択に徹したのが良い。
+> **本日合計P：朝約30＋昼約35＋夜約50＋寝る前20＝約135g**。維持モードの目標150gには僅かに届かないが、前日176g・移動連投の状況では135gで筋維持は十分。こってりの昼をカロリミット＋夜の高タンパク低脂質で相殺し、寝る前P20gで夜間の異化対策も実施。今週の「守る」方針として合格ライン。
+
+### 夜トレ
+- なし
+
+### 体重
+- **夜 74.4kg（参考値・判定対象外）**。6/21夜73.2kg→+1.2kg。飲み会・昼こってり・移動2日を経た一時増で、塩分＋グリコーゲン＋水分が主因（脂肪増ではない）。判定は通常運転に戻ってからの夜・週平均で行う（core.md／insights Q5-2）
+
+---
+
+## ▼ 06/22（月）出張1日目・仙台
+
+### 朝トレ
+- なし（出張移動日。日中はMTG・移動でラン/筋トレ不可＝維持モード初日）
+
+### 朝食
+- 自宅：**ティゴラ30g（P26.4g）＋クレアチン**（出張前に自宅で確実に摂取＝移動中の飲み忘れ防止。出張分は持参）
+- コンビニ調達：**明治 飲むヨーグルト（グレープフルーツ）1本**／P20.0g・脂質0g・140kcal・糖質14.6g
+- **朝P合計：約46g**（ティゴラ26.4＋ヨーグルト20）
+
+> **効果** 固形タンパクが手元になく、コンビニで脂質0g・P20gのドリンクヨーグルトを選択。WPI級の高タンパク・超低脂質で、後半（昼=移動/外食・夜=飲み会）が読めない出張初日に「コントロールできる朝のうちにPを積む」狙いが的確。朝P46gで150g到達の土台を確保し、6/19の出張明けP96g未達の再発を予防。糖質14.6gは座り移動主体の朝の軽い燃料として過不足なし。
+
+### 昼食
+- 日高屋：**ニラレバ炒め定食／ご飯小**（揚げない炒め物＝低脂質高タンパクの良メニュー。ご飯小で糖質側だけ軽く調整）
+- 卓上の**酢**を回しかけ（レバーのクセ切り。酢酸で食後血糖の上昇をゆるやかに＝ご飯小と方向一致）
+- 食後：**EPA・DHA＋マルチビタミン**（炒め物の脂質と同時摂取で脂溶性ビタミンの吸収◎）
+- **カロリミットは昼は見送り → 夜の飲み会（本日最大の糖質脂質食）に4粒温存**
+- P：レバニラのレバー/肉で **約30g前後** ／ **累計：朝46＋昼30＝約76g**
+
+> **評価** からあげ・ラーメン単品を避け揚げない炒め物定食を選択＝低脂質高タンパク方針に的中。レバーは超高タンパク低脂質で鉄分も補える。ご飯小でPを落とさず糖質だけ調整。カロリミットを夜の最大食へ温存した配置もQ2-3通りで妥当。残りは飲み会の焼き鳥・刺身でP積みして150g到達を狙う。
+
+### 夕トレ
+- なし
+
+### 夕食
+- 和食居酒屋（飲み会）。日本酒6種の飲み比べを2人でシェア＝**おちょこ約10杯相当（≈3合）**
+- タンパク質：刺身4切れ／カツオ3切れ／ぶり（おすすめ）／ほや1切れ／チキン3切れ＋小チキン5個（※揚げ調理ではない）／三角揚げ2切れ
+- その他：大根／ジャガバター一口
+- **カロリミットは飲み会序盤（食事前）に4粒投下**＝本日最大の糖質脂質食に温存どおり充当（計画的中）
+- 寝る前：**追いプロテイン25g＋ザバス プロテインバー15g＝P40g**（就寝前のタンパク補給で夜間の異化を抑制）
+- 夜の食事P：魚介＋チキン中心で約60g前後（揚げ物ほぼなし・低脂質高タンパク構成）
+
+> **評価** 居酒屋でも刺身・カツオ・ぶり・ほや・揚げてないチキンと高タンパク低脂質中心を選べており、〆ラーメンも回避。脂質源はジャガバター一口・三角揚げ程度に抑制。カロリミットを本日最大食の食前に投下＝Q2-3の使い方どおり。寝る前P40gで就寝中の筋分解対策も実施。
+
+> **本日合計P：朝46＋昼30＋夜約60＋寝る前40＝約176g**。維持モードの150g目標を余裕でクリア。飲み会日でも筋肉を守れた（今週の100点ライン達成）。
+
+### 夜トレ
+- なし（飲み会後そのまま就寝）
+
+### 体重
+- 未記録（出張中＋飲み会翌朝は塩分で一時的に増えるため判定に使わない＝core.md方針）
+
+---
+
+## ▼ 06/21（日）
+
+### 朝トレ
+- **時間 7:15–8:16**
+- **自重（機能的筋力トレーニング）7:12–7:45 / 33分18秒 / 平均HR72 / 91kcal（合計153）**
+  - 腕立てワイド 20×5（胸）／腕立てナロー 20×5（三頭）
+  - ※本来は夜だった自重パートを朝に前出し（就寝直前トレ回避＝Q4-1）
+- **Z2ラン（屋外）7:51–8:16 / 4.23km / 5'46"/km / 平均HR144 / 326kcal（合計371）/ ケイデンス160spm / 上昇16m**
+  - **平均HR144＝Z2上限にぴったり収まり狙い通り**。1km目134→以降146〜148で安定、垂れず巡航。直近の慢性Z3寄りを是正
+  - ペース据え置きで心拍低下＝持久力向上が数字でZ2域に到達
+- トレ前サプリ：**クアン**（腕立て前）
+
+> **効果** Z2ラン平均HR144＝Z2上限ちょうど。1km目134→以降146-148で安定し垂れず巡航。ペース据え置きで心拍が下がった＝同じ仕事をより低負荷でこなせる＝持久力が数値で向上。慢性的にZ3寄り（オーバーリーチ気味）だった直近を是正。自重を朝へ前出ししたのも好判断で、就寝直前トレを避け交感神経の高ぶり由来の入眠遅延・深睡眠阻害を防ぎ回復の質を確保（Q4-1）。
+
+> **学び** 「同ペースで心拍↓」が持久力向上の証拠である仕組み：心拍はその運動の生理的キツさの内部メーター。一定ペースで心拍が下がる＝1回拍出量（1拍で送る血液量）が増え、筋のミトコンドリア密度・毛細血管が増えて酸素利用効率が上がった結果。Z2（会話できる強度）はこの有酸素適応を最も効率よく起こす帯。
+
+### 朝食
+- **時間 8:30–8:35**
+- ラン後：**ティゴラ30g（P26.4g）＋クレアチン**（出張前も継続再充填中）
+- ※固形朝食なし（ティゴラのみ）
+
+> **効果** ラン後すぐティゴラ30g（P26.4g）＋クレアチンで補給。運動直後はグリコーゲン・筋タンパク合成の感受性が高く、素早い補給が回復を早める。クレアチンは出張で空けた分を再充填中。
+
+> **学び** クレアチンは「貯める」サプリ。毎日3-5gで筋内が数日〜1週間で飽和して効く。1日空けても急には抜けないが継続が前提。固形朝食なし（ティゴラのみ）で、1日P収支はプロテイン主体で積み上げ。
+
+### 昼食
+- **時間 12:30–12:55**
+- 中華風カタ焼きそば（あんかけ硬焼きそば）／ダノン PROTEIN DRINK 1本（P18.0g・脂質0・砂糖不使用・125kcal）／食後 EPA・DHA＋マルチビタミン
+- **カロリミットなし**（1日最大の糖質脂質食は夜の見込みのため夜に温存）
+- P：カタ焼きそば餡の具で約15〜25g＋プロテイン18g＝**昼で約33〜43g**
+
+> **効果** 昼にカタ焼きそばの糖質を入れたことで、夕方のトレ前までに筋・肝グリコーゲンが部分再充填され、夕トレ後半の出力低下を防ぐ土台になった（Q1-7）。ダノンプロテイン18gで血中アミノ酸も底上げ。
+
+> **評価** 1日最大の糖質脂質食を夜に見込み、カロリミットを昼で使わず夜に温存＝配置は妥当。昼Pはカタ焼きそばの具＋プロテインで約33〜43g。
+
+> **学び** カロリミット系（糖質脂質の吸収を穏やかに）は「その日いちばん糖質脂質が多い食事の食前」に集中投下が費用対効果が高い。分散より集中。
+
+> **次の一手** カタ焼きそば（揚げ麺）は脂質が乗りやすい。トレ日の昼でグリコーゲンを積みたい時は、揚げない糖質（白米・うどん・餅）＋赤身/鶏で同じ糖質量をより低脂質に取ると、P効率と脂質枠を両取りできる。
+
+### 夕トレ
+- **時間 17:15–18:50**
+- **パターンB＋ブルガリアンスクワット（6/20と同一メニュー・重量回数とも同じ）**
+
+  | 種目 | 部位 | 重量×回数×セット |
+  |---|---|---|
+  | ブルガリアンスクワット | 脚 | 重りなし10×5（左右）／15kg 10×5（左右） |
+  | ワンハンドロー | 背中 | 20kg 15×1／20kg 20×5（左右） |
+  | チェストプレス | 胸 | 40kg 20×5 |
+  | ショルダープレス | 肩 | 30kg 10×5 |
+  | アームカール | 腕 | 30kg 20×5 |
+  | サイドレイズ | 肩 | 15kg 10×5 |
+
+- トレ前：**クアン**（必須アミノ・糖質ゼロ）／トレ後：**アシッド28g（P20g）**
+- 予定したトライセプスエクステンション（初回10kg）は今日は見送り → 次回へ持ち越し
+
+> **効果** 6/20と同一の全身刺激（脚・背中・胸・肩・腕）を再現。トレ前クアンで血中アミノ酸を上げて分解の床上げ、トレ後アシッドのロイシン（閾値2.5〜3g超）でmTORを起動し筋合成スイッチON。今日は昼にカタ焼きそばの糖質が入っていた分、6/20の空腹トレより筋グリコーゲンの土台があり後半の出力低下は小さい（Q1-7）。
+
+> **学び** 同一メニューの連日反復は前回比を測るベースライン固定として有効だが、同じ刺激の反復は適応が頭打ちになりやすい。次回は漸進性過負荷（重量↑／回数↑／セット↑／ネガティブ強調のいずれか一点）で前回超えを入れるのが伸ばし所。
+
+> **次の一手** 三頭の直接刺激は6/20に続き未充填（Q4-5）。次回はアイソレーション帯の最後にトライセプスエクステンション10kg×12×3を入れ、腕（伸びしろ）の前後バランスを取る。
+
+### 夕食
+- **時間 19:00–19:30**
+- メンチカツ（からし）／焼きビーフン少し／ミニコーン少し／ズッキーニ・きのこ・じゃがいもの炒め物少し／シュウマイ2個／タンパク質チップス半分（P約20g）／バナナチップス
+- ビールなし／**カロリミット摂取**（昼に温存→1日最大の糖質脂質食=この夕食に集中投下）
+- 食後（風呂上がり）：**アクア（P20g・脂質0.2g）**でP底上げ
+- **1日P収支（確定）：約138〜148g**（朝ティゴラ26.4＋昼33〜43＋トレ後アシッド20＋夕食約39＋アクア20）＝目標150ラインにほぼ到達
+
+> **効果** ビールを抜いたのが大正解。アルコールはmTORを一時抑制しトレ後アシッドで起こした合成スイッチを鈍らせるため、トレ日の禁酒は回復効率を守る。カロリミットを揚げ物（メンチカツ）＋揚げ麺（ビーフン）＋バナナチップスという最大の糖質脂質食に集中投下したのもQ2-3通りの正配置。風呂上がりアクアでPを150ラインまで閉じた。
+
+> **評価** 食品メイン（メンチ・シュウマイ・ビーフン・バナナチップス）は揚げ物中心で脂質が重め（推定70〜85gで目標超過寄り）、カロリーも維持寄り＝今日は赤字が薄い日。ただしPはチップス＋アクアで死守でき、トレ日として合格。単日の脂質超過は夜・週平均で判定（Q5-1）。
+
+> **学び** バナナチップスは健康イメージと裏腹に揚げ＋加糖でカロリー脂質が高い（Q1-5）。揚げ物が重なる日は食品Pの効率が落ちるので、プロテインチップス・シェイクでのP底上げが有効。次回は一品を非揚げのタンパク源（冷奴・刺身・サラダチキン）に替えると脂質を抑えつつ食品Pが上がる。
+
+### 夜トレ
+- なし（夕トレで完了）
+
+### 体重
+- **夜 73.2kg（入浴後）**
+
+> **効果** 6/20夜75.3kg→6/21夜73.2kg（−2.1kg）。大半は脂肪減ではなく水分・グリコーゲンの変動＋入浴後の発汗（Q5-1：グリコーゲン1g＝水3g）。6/20は高糖質（寿司シャリ等）で水を抱えて一時増、本日その揺り戻し。
+
+> **評価** 目標72kg（8月末）に対し夜の値が73.2まで来たのは方向として良好。ただし単日の振れは大きいので判定は夜同士・週平均で。明日からの出張は維持モード、Pと睡眠を死守すれば下げ基調は崩れない。
+
+---
+
+## ▼ 06/20（土）
+
+### 朝トレ
+なし（朝は運動なしの予定通り）
+
+### 朝食
+- ティゴラ30g（P26.4g）＋クレアチン＋1本満足バー プロテインチョコ（P16g）＝朝で約42g
+
+> **効果** 朝でP約42gを確保し、1日のタンパク質土台を早い時間に作れた。
+
+> **学び** Pは一度に大量より朝から分けて確保する方が、筋合成スイッチを1日に複数回入れられて有利。
+
+### 昼食
+- 外食（急遽コンビニ→外食に変更）。胡椒チキン（タレ・マヨなし）＋野菜＋ご飯中（P約35g）／食後 EPA・DHA＋マルチビタミン
+
+### 夕トレ
+- **パターンB＋ブルガリアンスクワット 16:56–18:37（1時間40分 / 平均HR90 / 601kcal）**
+
+  | 種目 | 部位 | 重量×回数×セット |
+  |---|---|---|
+  | ブルガリアンスクワット | 脚 | 重りなし10×5（左右）／15kg 10×5（左右） |
+  | ワンハンドロー | 背中 | 20kg 15×1／20kg 20×5（左右） |
+  | チェストプレス | 胸 | 40kg 20×5 |
+  | ショルダープレス | 肩 | 30kg 10×5 |
+  | アームカール | 腕 | 30kg 20×5 |
+  | サイドレイズ | 肩 | 15kg 10×5 |
+
+- トレ前：アミノバイタル1袋（空腹トレの筋分解防止・糖質ゼロ）／トレ後：アシッド28g（P20g）
+- **進歩点**：アームカール25kg→30kgに増量（漸進性過負荷）。ブルガリアンスクワット新規追加
+- **評価**：昨日3時間→1時間40分に圧縮成功。平均HR90維持でインターバルを短く保てた＝理想形
+
+> **効果** パターンB＋ブルガリアンスクワットで上半身・腕・脚を網羅刺激。トレ後アシッドのロイシンで筋合成スイッチ(mTOR)を起動。1時間40分の適正時間でコルチゾール過多（＝筋分解）を回避。アームカール25→30kgは漸進性過負荷で腕に新刺激。
+
+> **学び** ロイシン閾値：トレ後の筋合成はタンパク総量だけでなくロイシン量（目安2.5〜3g）が一定を超えると入る。だからトレ後アシッドが効く。筋トレは60〜90分が効率帯、超えるとコルチゾール優位で異化リスク。
+
+### 夕食
+- スシロー19:30：はまち2・カツオ2・ぶり2・タイ1・カイカツオ梅ジュレ1・うなぎ2・サーモンハラス軍艦2・海鮮軍艦2・エビアボカドマヨ1・ハムアボカドマヨ1・サーモンアボカドマヨ1・からあげ3・どびっこ巻き1・あおさ汁1・ナス揚げ浸し2（P約100g）／食前カロリミット4粒
+
+> **評価** スシローの高タンパクでトレ後の材料を補充し前日のP不足を完全リカバリー（朝42＋昼35＋トレ後20＋夜約100＝約197g、目標150g超）。1日最大の糖質食（シャリ120-150g）の食前にカロリミット4粒を集中＝配置が的中。
+
+### 夜トレ
+- **自重パート 21:56–22:44（48分 / HR74 / 223kcal）**：夕方はベンチ中心だったため夜に自重を実施しパターンB完成
+
+  | 種目 | 部位 | 内容 |
+  |---|---|---|
+  | 腕立てワイド | 胸 | 20回×5 |
+  | 腕立てナロー | 三頭・腕 | 20回×5 |
+  | 腹筋クロス | 腹 | 20回×10セット |
+
+- トレ後：牛乳のみ（P197g達成済のためプロテイン足さず＝正解）
+- **注意点**：21:56開始＝就寝前で遅い。本来は夕方トレで自重まで一気に終えるのが理想
+
+### 体重
+- **夜 75.3kg**（基準値）。6/19夜73.8→6/20夜75.3。昼の胡椒チキン＋ご飯、夜スシロー約20貫（シャリ糖質120-150g）の直後＝グリコーゲン再充填＋水分保持による一時増が主因。脂肪増ではない。判定は夜・週平均で
+
+> **評価** 夜75.3kg（6/19夜73.8→）。昼の胡椒チキン＋ご飯、夜寿司の高糖質直後＝グリコーゲン再充填＋水分保持による一時増が主因で脂肪増ではない。
+
+> **学び** 体重は単日でなく夜・週平均で判定。高糖質日の翌朝増はほぼ水分。グリコーゲン1gは水を約3g抱える。
+
+### タンパク質収支
+- 朝42g＋昼35g＋トレ後アシッド20g＋夜スシロー約100g＝**合計 約197g**。目標150g超過達成。前日96g未達から完全リカバリー
+
+### 効果
+- **筋合成（MPS）**：パターンB＋ブルガリアンで上半身・腕・脚を網羅刺激。トレ後アシッドのロイシンで合成スイッチ起動。1時間40分の適正時間でコルチゾール過多も回避。P197gで材料は完全
+- **漸進性過負荷**：アームカール25→30kgで腕に新刺激
+- **カロリミット最適配置**：1日最大の糖質食（寿司シャリ120〜150g）の食前に4粒集中。昼に温存した判断が奏功
+
+### 所感
+昨日の反省（トレ3時間・P96g未達）を両方修正。トレ1時間40分・P197g達成。カロリミットを夜スシローに温存する戦略が的中。アームカール増量・ブルガリアン追加で筋力向上の手応え
+
+---
+
+## ▼ 06/19（金）
+
+### 朝トレ
+- **ラン 2.94km / 21:05 / 平均5'47"/km / 平均HR150 / 259kcal**
+- スプリット：1km 5'38"(HR143) → 2km 5'44"(HR158) → 3km 5'55"(HR149)
+- **強度**：平均HR150＝最大188の約80%（Z3）
+- **分析**：前夜ほぼ絶食＋朝クアンのみで筋グリコーゲン枯渇→エネルギー切れで早めにブレーキ。走力低下ではなく燃料不足。出張明け初日として想定内
+
+### 朝食
+- クアン1袋（ラン前・筋分解防止/糖質ゼロ）→ ラン → ティゴラ30g（P26.4g）＋クレアチン（出張明け再開）
+
+> **効果** クレアチンを本日から毎日再開＝出張で空いた筋内を再飽和へ。継続が前提のサプリ。
+
+### 昼食
+- 中華丼（自宅）／食前カロリミット4粒／食後 EPA・DHA＋マルチビタミン
+
+### 夕トレ
+- **夜・パターンB＋スクワット メイン 19:29–22:33（3h03m / 690kcal / 平均HR83）**＋機能的筋力 22:43–23:11（計約27分）
+- 〈ベンチパート〉ダンベルベンチプレス・ワンハンドロウ・ショルダープレス・ダンベルカール・トライセプスエクステンション・サイドレイズ（各40kg上限／実重量・回数は未記録）
+- 〈自重パート〉腕立てワイド20×5・ナロー20×5・腹筋クロス20×5
+- 〈追加〉スクワット 重りなし10×5・15kg10×5（左右交互）
+- **時間への指摘**：3時間超・平均HR83＝インターバル長すぎ。効果的時間は60〜90分。次回1〜1.5分に締め90分以内へ。終了23:11は就寝前で寝つき低下の懸念
+
+> **効果** トレ後アシッドで合成を起動。ただしトレが長時間化しコルチゾール増の懸念。
+
+> **次の一手** 次回は90分以内に圧縮し、インターバルを短め（1〜1.5分、高重量後2分）に締める。
+
+### 夕食
+- 夕食19:00（シュウマイ4・あんかけ野菜・ご飯一口・フライドチキン1）→ 筋トレ → トレ後アシッド28g（P20g・ロイシン豊富）
+
+> **評価** 固形中心でP約96g＝目標150gに約54g不足。中華丼・シュウマイ・フライドチキンは脂質糖質が多くP効率が低い。
+
+> **学び** 固形だけでP150gは脂質糖質が同伴しカロリー過多になりやすく非効率。プロテインはP密度が高くカロリーを抑えて目標に届く＝P効率が高い。翌日は鶏むね・魚・卵・大豆＋プロテインで立て直し。
+
+### 夜トレ
+なし（夕トレに集約）
+
+### 体重
+- **夜 73.8kg**（基準値）。朝ラン後71.8kg（参考）
+- **分析**：脂肪減ではなく、出張（6/17夜〜18）でグリコーゲン・体水分が抜けた状態が未回復。通常食を数日で夜74kg前後に戻る見込み
+
+> **評価** 夜73.8kg。出張（6/17夜〜18）でグリコーゲン・体水分が抜けた状態が未回復。通常食で数日内に夜74kg前後へ戻る見込み（脂肪減ではない）。
+
+### タンパク質収支
+- プロテイン確定46.4g（ティゴラ26.4＋アシッド20）＋固形約25g（中華丼・シュウマイ・フライドチキン）＝**合計 約96g**。目標150gに約54g不足
+- 中華丼・シュウマイ・フライドチキンは脂質糖質が多くP効率が低い。翌日以降は高タンパク低脂質（鶏むね・魚・卵・大豆）に寄せて立て直し
+
+### 効果
+- **MPS**：トレ後アシッドで合成起動。ただしトレ長時間化でコルチゾール増の懸念→直後アシッドで異化を抑制
+- **クレアチン**：出張で空けた分を本日朝から再開。筋内飽和の再充填始動
+- **有酸素＋筋トレ併用**：朝ラン脂質動員＋夜トレ筋刺激＝リコンプ方向。ただし両方過剰気味で出張明けは回復負荷大
+
+### 所感
+通常運転復帰初日。サプリ配置は的確。課題は①筋トレ3時間→次回90分以内、②P96g未達→高タンパク低脂質で立て直し。体重73.8は水分・グリコーゲン減が主因。クレアチン本日から毎日再開
+
+### タンパク質戦略の気づき（6/19深夜）
+- 固形食だけで稼ぐのは非効率と確認→今後はプロテインを戦略的に組み合わせて150gを確実に届かせる
+- 深夜のアクアは見送り（就寝直前の糖質回避・睡眠優先）。1日の未達で筋肉はすぐ落ちない。翌日150gで挽回
+
+---
+
+## ▼ 06/18（木）出張2日目・広島
+
+### 朝トレ
+- **ホテルで自重トレ 7:22–7:43（平均HR92 / 132kcal）**：腕立てワイド20×5・ナロー20×5・腹筋クロス20×5
+
+> **効果** 出張中の維持トレとして満点級。ホテル自重でワイド/ナローを分け胸・三頭をカバー。低負荷でも頻度を保てば筋量の落ちは防げる。
+
+> **学び** ディトレーニング（脱トレ）の時間軸：筋力は2週間程度では大きく落ちない。出張数日なら短時間自重×頻度で維持十分。先に落ちやすいのは筋力より有酸素系なので帰宅後は持久の立て直しを優先。
+
+### 朝食
+- 自重トレ後 → サラダチキン梅しそ（P24.9g）＋コーンサラダ＋ドレッシング＋ザバスミルクプロテインヨーグルト（P15g）＝P約42g
+
+> **効果** 朝でP約42gを確保し、移動日でも材料切れを防いだ。
+
+### 昼食
+- チキン南蛮定食（13:20）※カロリミット飲めず。EPA・マルチは食後に摂取
+
+### 夕トレ
+なし
+
+### 夕食
+- だしむすび＋ザバス ミルクプロテイン ココア（P15g）。カロリミット4粒は夜の食前に充当
+
+### 夜トレ
+なし
+
+### 体重
+- 記録なし（出張）
+
+### 所感
+出張中の維持トレとして満点に近い。ワイド/ナローで胸・三頭を分けてカバー。タンパク質も確保（クアン/アミノバイタルは走らないため温存）
+
+---
+
+## ▼ 06/17（水）
+
+### 朝トレ
+- **ラン 3.74km / 5'38" / HR152 / 331kcal → Z3（143→153→157→160）**
+
+> **効果** 3日連続ランで心拍が最も安定＝走りに順応した有酸素適応のサイン。ただしHR160までのZ3寄りで減量土台づくりとしてはやや高強度。
+
+> **学び** Z3慢性化の落とし穴：中強度に偏ると疲労が抜けにくく脂質燃焼や持久の伸びが鈍る。低強度Z2と高強度を明確に分ける“極化（ポラライズド）”が持久力を効率よく伸ばす。翌日からの出張に備えクレアチン補充は継続。
+
+### 朝食
+- 朝ラン前クアン → ラン → ティゴラ30g＋クレアチン（※翌日から出張）
+
+### 昼食
+
+### 夕トレ
+
+### 夕食
+
+### 夜トレ
+
+### 体重
+- 夜 72.8kg
+
+> **評価** 出張入り前日（6/17）の夜72.8kg。週内では低めの値で、6/18の出張で体水分・グリコーゲンが抜ける前の通常運転に近い素の値。以降の変動はそこからの揺れとして読む（Q5-1）。
+
+### 所感
+3日間で一番心拍が落ち着き、走りに順応してきた良い兆候
+
+---
+
+## ▼ 06/16（火）
+
+### 朝トレ
+- **ラン 3.72km / 5'40" / HR154 / 330kcal → Z3（後半163までビルドアップ）**
+
+> **効果** 申告ペース6'00より速く長く走れ走力ベースは十分。ただしHR163までのビルドアップで減量目的にはやや強め（糖質優位の燃焼帯に寄る）。
+
+> **学び** 脂質が燃える強度帯：強度が上がるほど糖質依存が増し、脂質酸化のピーク（ファットマックス）は中低強度＝多くはZ2域。減量土台づくりはZ2比率を増やし強度走は本数を絞るのが効率的。
+
+### 朝食
+- アクア（ラン前・この日は半分）→ ラン → ティゴラ30g（クレアチンは午前忘れ→昼へ移動）
+
+### 昼食
+- EPA・DHA＋マルチビタミン＋クレアチン
+
+### 夕トレ
+- 平日メニュー予定（夜）※実施記録なし
+
+### 夕食
+
+### 夜トレ
+
+### 体重
+- 夜73.9kg（朝ラン後72.8kg・参考）
+
+### 所感
+申告6'00より速く長く走れた。走力ベース十分。減量目的にはやや強め
+
+---
+
+## ▼ 06/15（月）
+
+### 体重
+- 夜 73.3kg
+
+> **評価** 週の起点付近の夜73.3kg。6/14夜74.1→6/15夜73.3。単日の振れ幅の範囲内で、判定は夜同士・週平均で見る（Q5-1）。
+
+---
+
+## ▼ 06/14（日）
+
+### 朝トレ
+- **ラン 8.01km / 5'39" / HR157 / 693kcal → Z3（後半5'13まで上げ・ビルドアップ良好）**
+
+> **効果** 8kmでも後半5'13まで上げられ持久ベースは確か。ロング走後は回復（睡眠・タンパク質）を優先したい。
+
+> **学び** 有酸素土台は長めのZ2〜やや上の距離で作られる。翌日の回復管理がセットで効く。
+
+### 朝食
+
+### 昼食
+
+### 夕トレ
+- ジムメニュー（脚・尻・胸・肩・背）
+
+> **効果** ジムで脚・尻・胸・肩・背の大筋群を全身刺激＝成長ホルモン・テストステロン応答が出やすい構成でリコンプ（筋維持＋体脂肪管理）に効率的。
+
+> **学び** 複合（コンパウンド）種目（スクワット等の多関節）は単関節より高いエネルギー・内分泌応答を生む。週1〜2で漸進性過負荷を管理しながら軸にすると効率的。
+
+### 夕食
+
+### 夜トレ
+
+### 体重
+- 夜74.1kg
+
+### 所感
+8kmでも後半上げられた。持久ベース確か
+
+---
+
+</script>
+<script type="text/plain" id="src-insights"># 健康・トレーニング Q&A ナレッジベース（insights.md）
+
+> log.md =「日々の流れ」／本ファイル =「いつ見返しても通用する Q&A の知の財産」。
+> 各エントリは **Q（タイトル形式の問い） → A（結論→理由→適用条件→※根拠）**。
+> 日付に依存しない一般原則で書く。実証データは末尾に「※根拠」として添えるのみ。
+>
+> **ID規則**：`カテゴリ番号-連番`（1栄養 / 2サプリ / 3ラン / 4トレ設計 / 5体重判定 / 6メンタル）。
+> 新規は連番を足すだけ。欠番は埋めない（参照を壊さないため）。
+>
+> **追記ルール**：既存Qの補強 → そのAに1行追記（重複を増やさない）。
+> 新テーマ → カテゴリ末尾に新Qを追加＋下の目次に1行足す。
+
+最終更新：2026-06-21
+
+---
+
+## ■ 目次
+
+**1. 栄養・食事**
+- Q1-1. 夜が麺・ビール・つまみになりそうな日、タンパク質はどう確保する？
+- Q1-2. 飲み会・寿司でタンパク質は稼げる？
+- Q1-3. 「脂質は摂っていい」と雑誌にある。唐揚げ弁当はアリ？
+- Q1-4. コンビニ昼食、何を選ぶのが正解？
+- Q1-5. かさが少なければ低カロリー？
+- Q1-6. カタ焼きそば と 唐揚げ弁当 ならどっち？
+- Q1-7. グリコーゲンとは何か（糖の貯蔵バッテリー・トレの燃料）？
+- Q1-8. プロテインや高タンパク間食は、一度に食べるのと小分けで食べるのとどちらがいい？
+
+**2. サプリ・プロテイン**
+- Q2-1. アミノバイタルがない。買い足すべき？
+- Q2-2. マグネシウムはいつ飲むのが効く？
+- Q2-3. カロリミットはどのタイミングで使う？
+- Q2-4. トレ前のクアン（EAA）はなぜ・いつ飲むと効く？
+
+**3. 有酸素・ラン**
+- Q3-1. Z2で走りたいのに心拍が上がってしまう。どうする？
+- Q3-2. 持久力が伸びているかは何で分かる？
+- Q3-3. 走るとお腹が痛くなる。原因と対策は？
+
+**4. トレーニング設計**
+- Q4-1. 夜のトレが就寝直前になってしまう。どう組む？
+- Q4-2. 朝に筋トレを入れると、同じ日のランに響く？
+- Q4-3. 数日まとめて休む予定がある日、トレはどうする？
+- Q4-4. 種目の効果的な順番は？
+- Q4-5. 腕を太くしたい。何を足す？
+
+**5. 体重・判定**
+- Q5-1. 高糖質日の翌日に体重が増えるのはなぜ？気にすべき？
+
+**6. メンタル・継続**
+- （随時追加）
+
+---
+
+## 1. 栄養・食事
+
+### Q1-1. 夜が麺・ビール・つまみになりそうな日、タンパク質はどう確保する？
+
+**A.** タンパク質を昼で稼いでおく。
+
+- 理由：麺類はタンパク質がほぼ取れず、つまみは内容でブレるため、夜に150g到達を期待する設計は崩れやすい。昼でタンパク質の土台を固めておけば、夜が崩れても1日合計が残る。
+- 適用：夜が外食・飲みになる見込みの日は、昼をタンパク質MAX寄り（チキン多め／焼肉弁当でP35g前後）にする。
+
+### Q1-2. 飲み会・寿司でタンパク質は稼げる？
+
+**A.** 選び方次第でP30〜50g稼げる。つまみは敵ではない。
+
+- 理由：高タンパクなつまみを軸にすればアルコールの席でもタンパク質が立つ。
+- 適用：枝豆・冷奴・刺身・焼き鳥(塩)・砂肝・たこわさ・あたりめ等を先に頼む。先にこれらで腹を作ると〆の麺欲求も減る。
+- ※根拠：寿司（魚介ネタ中心）でP約100gを実測した日がある。
+
+### Q1-3. 「脂質は摂っていい」と雑誌にある。唐揚げ弁当はアリ？
+
+**A.** 文脈による。脂質は必要栄養素だが、**減量期かつトレ前の昼**では揚げ物の優先度は下がる。
+
+- 理由：減量期はカロリー枠の中で脂をどこに使うかの勝負。脂質はEPA・マルチ・夕食の肉魚で必要量（60〜70g）に届くため、昼の限られた予算はタンパク質側に振る方が得。揚げ物はタンパク質効率が低く、トレ前は消化が重い。
+- 適用：通常運転の減量日は優先度低／出張・維持週の外食では「Pが取れるなら揚げ物でも食べる」でOK。一般論（雑誌の平均値）と個別最適（自分の目標×その日の予定）は別物。
+- ※根拠：Tarzan記事との比較検討より。
+
+### Q1-4. コンビニ昼食、何を選ぶのが正解？
+
+**A.**（減量期＋トレ前の場合）パンとチキン ＞ 焼肉弁当 ＞ ハンバーグ弁当 ＞ 唐揚げ弁当 ＞＞ 冷やし中華・ラーメン。
+
+- 理由：判断軸は①タンパク質が稼げる②脂質が重すぎない③午後に胃が重くならない。サラダチキン＋シンプルなパンはP30〜40gを作りやすく脂質も軽い。麺単品はタンパク質ほぼゼロで最下位。
+- 適用：チキンは揚げていないもの、パンは菓子パン・揚げ系を避ける。維持週・外食ではこの順位は緩めてよい（Q1-3参照）。
+
+
+### Q1-5. かさが少なければ低カロリー？
+
+**A.** 限らない。調理法（揚げ・炒め）でカロリーは逆転する。
+
+- 理由：白米のように「炊いただけ」のものは脂質ほぼ0だが、揚げ麺・揚げ物・炒め物は油が乗るため、見た目のかさが小さくても総カロリー・脂質はむしろ高くなりうる。
+- 適用：「少なそう＝軽い」で判断しない。糖質だけ見るか／総カロリー・脂質で見るかで評価が変わる（Q1-3の文脈依存と同根）。
+
+### Q1-6. カタ焼きそば と 唐揚げ弁当 ならどっち？
+
+**A.**（減量を攻める通常運転の日は）カタ焼きそばの方がマシ。
+
+- 理由：①唐揚げは衣＋揚げ油でカロリーの割にタンパク質効率が低い／②揚げ物の塊は脂質が最も重く、夜も揚げ系が来る日は1日の脂質枠を超えやすい。カタ焼きそばは揚げ麺で脂質はそれなりだが唐揚げ弁当ほどではなく、餡の具で P15〜25g 稼げる。
+- 適用：減量を攻める日の優先順は カタ焼きそば ＞ 唐揚げ弁当。ただし出張・維持週で選択肢が限られる外食なら「Pが取れるなら唐揚げ弁当でもOK」に緩める（Q1-3・Q1-4参照）。
+
+### Q1-7. グリコーゲンとは何か（糖の貯蔵バッテリー・トレの燃料）？
+
+**A.** 体が糖をためておく「貯蔵バッテリー」。食べた糖質はブドウ糖に分解され、余りをブドウ糖を多数つないだ房状の分子にして肝臓と筋肉にしまう。必要時に枝先から即エネルギーに戻せる、出し入れの速い在庫。
+
+- **2か所で役割が別**：肝グリコーゲン（約100g）＝血糖維持係（食間・睡眠中に血中へ放出し脳の燃料を切らさない）／筋グリコーゲン（約400g）＝その筋専用のローカル燃料で、血中には戻せずその筋の収縮にしか使えない。合計約500g＝約2000kcal。
+- 適用（トレ）：中〜高強度の筋トレ（スクワット・チェストプレス等）は筋グリコーゲンを主燃料にする。在庫が少ないと種目後半で出力が垂れる。トレ前数時間に糖質が入っていれば積まれて垂れにくい（糖質配置はQ1-3・Q1-6に接続）。
+- 適用（補給窓）：運動直後は筋の糖取り込み感受性が高く、素早い糖質・タンパク補給が再充填と回復を早める。
+- 体重への影響は **Q5-1** に分離。
+### Q1-8. プロテインや高タンパク間食は、一度に食べるのと小分けで食べるのとどちらがいい？
+
+**A.** タンパク質を確保する目的なら、**小分け（分割摂取）の方が有利**。理由は3つ。
+
+- **吸収・合成の効率**：1回の食事で筋合成に有効に使えるタンパク質量はおおむね20〜40g/回で頭打ち。20g級の間食（プロテインチップス等）を午前・午後に割れば、両方とも有効域に収まり、合成に回る割合が高くなる。一度に大量だと超過分は合成に乗りにくい。
+- **空腹コントロール**：空腹の谷が複数ある日は、間食を分けて各谷に当てると、別のものをつまむ隙をふさげる。1回でまとめると残りの谷で余計な間食が増えやすい。
+- **満腹感・血糖の安定**：少量を分けて入れる方が満足感が続き、食事全体のドカ食い予防にもなる。
+- 留意：「ながら食べ」で無意識に進むと量管理が緩む。**1日◯袋と枠を決めてから分割**すれば崩れない。
+- 適用例（6/26）：BODY STARプロテインチップス1袋（P20.6g）を午前・午後に分割。空腹起点の在宅日に有効に機能した。
+
+---
+
+## 2. サプリ・プロテイン
+
+### Q2-1. アミノバイタルがない。買い足すべき？
+
+**A.** 不要。クアンがあれば役割は完全に代替できる。
+
+- 理由：必須アミノ・ほぼ0kcal・トレ前の筋分解防止という機能がクアンと同一（仕組みはQ2-4）。
+- 適用：**アミノバイタルの在庫が尽きてもクアン1本で運用可**。トレ前が1日2回（朝＋夕方）でも両方クアンで充てて問題ない。買い足すなら別ジャンル（例：マグネシウム＝Q2-2）に予算を回す方が得。
+
+### Q2-2. マグネシウムはいつ飲むのが効く？
+
+**A.** 就寝前。特に飲酒した日の夜は噛み合う。
+
+- 理由：アルコールはマグネシウムの排出を促す。また運動量が多いと汗・尿で失いやすく、睡眠の質・筋弛緩・回復をサポートする。
+- 適用：飲酒日／高負荷トレの日／翌日に移動・早朝予定がある日の就寝前。形はグリシン酸マグネシウム（キレート）が吸収・胃への優しさで優秀。即効ブースターではなく「不足を正常に戻す」タイプである点に注意。
+
+### Q2-3. カロリミットはどのタイミングで使う？
+
+**A.** 1日で最も糖質・脂質が重い1食の直前に4粒集中（1日上限4粒）。
+
+- 理由：分散させず最大負荷の食事に当てた方が吸収抑制の効果が立つ。
+- 適用：夜が麺＋ビール＋揚げ系つまみになりそうなら夜に温存。脂質の軽い昼（チキン系）には不要。
+
+### Q2-4. トレ前のクアン（EAA）はなぜ・いつ飲むと効く？
+
+**A.** トレ中の筋分解を浅くするため、開始10〜15分前に飲む。ほぼ0kcalで損がないので手元にあれば飲む一択。
+
+- 理由：筋トレ中は合成と分解が同時進行し、最中は一時的に分解がやや優位。クアン（必須アミノ酸＝筋の材料そのもの）で血中アミノ酸を先に上げると、体が自分の筋を切り崩して材料調達する必要が減り、正味の分解マイナスが浅くなる。
+- なぜ「前」か：血中アミノ酸は上がるまで時間差があり、効かせたいのはトレ最中。だから直前に入れ、トレ中ずっと高濃度を保つ。朝飲んでも夕方には抜けるのでトレごとに入れ直す（1日2回＝朝＋夕方とも可）。
+- 適用条件：必須でなく「やった方が有利」。直近の食事でP（例：昼にP30g超を3〜4時間前）が入っていれば床ができ、トレ前EAAゼロでも大崩れしない。最優先はトレ後のロイシン補給と1日150g確保。
+
+---
+
+## 3. 有酸素・ラン
+
+### Q3-1. Z2で走りたいのに心拍が上がってしまう。どうする？
+
+**A.** 最初の1kmを特にゆっくり入る。
+
+- 理由：立ち上がりで心拍を抑えると、その後の巡航も低い位置で安定しやすい。逆に最初に上げると下げ直すのが難しい。
+- 適用：ペースより心拍を優先（会話できる強度）。腕立て等の直後でスタート時心拍が高い日は特に意識する。
+- ※根拠：腕立て直後スタートでも、1km目を134に抑えたことで平均HR144（Z2上限）に収まり、最後まで垂れずに巡航できた。
+
+### Q3-2. 持久力が伸びているかは何で分かる？
+
+**A.** 同じペースで心拍が下がっていれば順応のサイン。
+
+- 理由：走力（ペース）が同じまま心拍が落ちる＝同じ仕事をより低い負荷でこなせるようになっている。
+- 適用：ペースと心拍をセットで記録し、ペース据え置きでHRが下がる傾向を見る。
+- ※根拠：同ペース帯で平均HRが157→154→152→150と低下し、最終的にペース5'46のままHR144でZ2域に到達した推移がある。
+
+### Q3-3. 走るとお腹が痛くなる。原因と対策は？
+
+**A.** 主因は**走る直前の飲食**。固形物やプロテイン（液体含む）を運動直前に入れると、消化に血流が要る一方で運動が消化器を揺らし、消化が追いつかず腹痛・脇腹痛になりやすい。
+
+- 対策：**固形・プロテインは運動の30〜60分前までに食べ終える**。直前（〜15分前）は水分程度にとどめる。
+- 朝に走る日は、朝食とラン開始の間隔を空ける。間隔が取れないなら朝食を軽く（少量の糖質＋水分）にして、しっかりした補給はラン後に回す。
+- ラン前のグリコーゲン補給（おにぎり等）は有効だが、それも「直前」ではなく前もって。糖質補給の考え方はQ1-7。
+- ※根拠（6/27）：朝食（おにぎり＋チキン＋ザバス）をラン開始11:04の直前に入れ、走行中に腹痛→1kmごとに分割せざるを得ず十分に走れなかった。再開初日の実走で確認。
+
+---
+
+## 4. トレーニング設計
+
+### Q4-1. 夜のトレが就寝直前になってしまう。どう組む？
+
+**A.** 自重パートを朝に出し、夜は腹筋だけにして軽く短く終える。
+
+- 理由：就寝直前の高強度は交感神経を高ぶらせ寝つきを下げる。分割すれば部位カバレッジ（胸・三頭は朝の腕立て、腹は夜）を保ちつつ夜を軽くできる。
+- 適用：翌日に移動・早朝予定がある日に特に有効。
+
+### Q4-2. 朝に筋トレを入れると、同じ日のランに響く？
+
+**A.** 上半身（腕立て等）なら脚は無傷なのでランに干渉しない。
+
+- 理由：使う部位が違う。朝の腕立て→ラン→夕方ベンチの間隔が8時間以上あれば、胸・三頭も回復し夕方のベンチも削られない。
+- 適用：朝に上半身自重→ラン、の順なら両立可。脚トレを朝に入れた日は同日のランへの影響を考慮する。
+
+### Q4-3. 数日まとめて休む予定がある日、トレはどうする？
+
+**A.** 最後のトレ窓として押してよい。ただし強度のかけどころを分ける。
+
+- 理由：4日以上の休養が後ろに控えるなら回復が保証されるため、やり込んでも under-recovery にならない。むしろ休養前に1本入れるとMPSの余韻を休養初期に持ち込める。
+- 適用：低優先・筋肉痛の部位（脚など完成度の高い部位）は無理にPRを狙わず維持。伸びしろ（上半身・腕）で前回超えを狙う。時間は60〜90分で締める。
+
+### Q4-4. 種目の効果的な順番は？
+
+**A.** 多関節（コンパウンド）を先、単関節（アイソレーション）を後。被る小さい筋を先に潰さない。伸びしろ部位は新鮮な前半に置く。
+
+- 理由：コンパウンドは扱う重量・動員筋・神経出力が大きく、疲労前に置くと最大刺激を安全に入れられる。先に小筋（二頭・三頭・三角）を疲れさせると、後のプレス/ローの出力が落ちる。
+- 適用：プレス/ロー/スクワット系を前半 → カール・エクステンション・サイドレイズを後半。二頭（カール）は背中ローの後、三角（サイドレイズ）は各プレスの後。脚は本来最初だが、維持目的なら安全を優先しつつ順序を固定して前回比を取る。
+- ※根拠：6/20夕方の並び（脚→背中→胸→肩→二頭→三角）はこの原則を満たしていた。
+
+### Q4-5. 腕を太くしたい。何を足す？
+
+**A.** 二頭だけでなく三頭の直接種目（トライセプスエクステンション）を足す。
+
+- 理由：三頭は腕の太さの**約2/3**を占める。プレス系で間接的には入るが、腕が伸びしろなら直接1種目で成長刺激を与える方が効率的。カール（二頭）だけだと前面しか育たず不均衡になる。
+- 適用：アイソレーション帯（後半）に1種目。初回は軽め（10kg前後）でフォーム習得→漸進で15–20kgへ。肘に負担が出やすいのでネガティブ2〜3秒・肘固定・痛みが出たら即軽量化。器具がなければナロー腕立て（自重）で代替可。
+- ※根拠：6/20は二頭（カール）のみで三頭の直接刺激がゼロだったため、6/21から補完。
+
+---
+
+## 5. 体重・判定
+
+### Q5-1. 高糖質日の翌日に体重が増えるのはなぜ？気にすべき？
+
+**A.** ほぼ水。気にしなくてよい。判定は夜・週平均で。
+
+- 理由：グリコーゲン1gは水を約3g抱えて蓄えられる（仕組みはQ1-7）。高糖質日の直後は再充填＋その水分で一時増えるだけで脂肪増ではない。糖質を抜くと真っ先に減るのもこの水。
+- 適用：単日・空腹/脱水の値で計画を変えない。夜同士・週平均で見る（core.md 体重判定ルールと同根）。
+- ※根拠：6/20夜75.3kg（前夜73.8→）の増分は、昼のご飯＋夜寿司のシャリ（糖質120-150g）直後の再充填＋水分が主因で脂肪増ではなかった。
+
+---
+
+### Q5-2. 塩分・糖質を多く摂った翌日に体重が1〜2kg増えるのは脂肪？
+
+**A.** ほぼ水分と燃料（グリコーゲン）で、脂肪ではない。判定は夜・週平均で。
+
+- **グリコーゲン＋水（主因）**：糖質の余剰は筋・肝にグリコーゲンとして貯蔵され、その際**グリコーゲン1gにつき水を約3g**抱え込む。満タンまで貯まるとグリコーゲン＋水で**1.5〜2kg**増える。これは燃料タンクが満ちただけで脂肪増ではない。糖質を控えると真っ先に抜け、体重が落ちるのもこの水。
+- **塩分（ナトリウム）＋水**：塩分過多→体内の塩分濃度を一定に保つため水分を貯留。外食・コンビニ・居酒屋・バイキングは塩分が多く、これだけで**0.5〜1kg**動く。
+- **アルコール明けの戻り**：飲んだ翌日は一時的なむくみ（水分保持）で上乗せ。
+- **物理の裏付け**：脂肪1kg増には約**7,200kcal**の余剰が必要。数日の通常飲食では到達不可能＝短期の増分は脂肪では“ありえない”。
+- 適用：単日・脱水・出張・飲み会の値で計画を変えない。**夜同士・週平均**で判定（core.md 体重判定ルールと同根）。
+- ※根拠：6/21夜73.2kg→6/23夜74.4kg（+1.2kg）は飲み会・昼こってり・移動2日を経た一時増で、塩分＋グリコーゲン＋水が主因。過去も6/19夜73.8→6/20夜75.3（高糖質日翌日+1.5kg）が水分と確認済み。
+
+---
+
+## 6. メンタル・継続
+
+### Q6-1. 数日トレを休むと「筋肉が落ちたのでは」と不安になる。実際どう？
+
+**A.** 数日のブランクでは落ちない。不安になるのは自然な反応だが、記録を見れば問題ないと確認できる。
+
+- **不安はほぼ誰にでも起こる正常な反応**。「萎んだ」と感じやすいが、見た目の張りが抜けるのは筋グリコーゲン＋水分が減るためで、筋線維そのものが減ったわけではない（Q5-1・Q5-2と同根）。
+- **科学的な裏付け**：筋力・筋量は2週間程度の休止では大きく落ちない（脱トレ＝detrainingはまず有酸素から低下する）。特に直前に高負荷で追い込み＋タンパク質が足りていれば、休止数日はむしろ回復・合成のフェーズ。
+- **自分の記録で確認できる**：6/14ジム → 6/18ホテル自重 → **6/19・20・21とパターンB＋スクワットを3日連続**で高負荷。筋トレ不可は出張で物理的にできない6/22・6/23の2日のみ。つまり「3連続で追い込んだ直後の2日オフ」＝典型的な適正回復で、筋肉が落ちる条件（2週間規模の無刺激＋低タンパク）とは真逆。
+- 適用：休んで不安になったら、感覚で判断せず「①直近のトレ頻度 ②タンパク質が足りているか」の2点をログで確認する。両方OKなら心配不要。短い休みは回復として前向きに捉えてよい。
+- ※根拠：6/22 P176g、6/19〜21の3連続高負荷の記録あり。出張中の2日オフは脱トレではなく回復フェーズ。
+
+---
+
+（随時追加）
+</script>
+
+<script type="text/plain" id="src-review"># フィットネス日次総評（review）
+
+※log.md（事実＋セクション別評価）とinsights.md（普遍Q&A）に対し、本ファイルは「その日の俯瞰レビュー」を蓄積する正本。新しい順。
+
+---
+
+## ▼ 06/28（日）脚の日・自己ベスト更新／カット集中ウィンドウ初日（朝ジム28セット＋夜ベンチ）
+
+### 食事総評（88/100）
+- **タンパク質：約165〜170g / 150g（達成 ✅・上振れ）**。朝食35（蒸し鶏＋もち麦昆布おにぎり）＋朝トレ後ティゴラ26.4＋昼前チップス1袋20.6＋昼58（鶏むねサラダ＋アマニ油ドレ＋ミルクプロテイン脂肪0＋カニカマ）＋夕（冷やし中華＋サラダチキン多め＋枝豆）目安25〜30＋夜トレ後アシッド20。就寝前は充足のため無し。
+- 良かった点：①昼にミルクプロテイン脂肪0（P30・脂0）でPを厚く積み低脂質を維持。②ドレッシングをアマニ油（オメガ3）にしてマヨを回避＝脂質の"質"を確保（R5/条32）。③冷やし中華を具(サラダチキン)先・麺後＝カーボラスト。④カロリミットを最こってり食(冷やし中華)に的中。⑤午後はガム・炭酸水で間食を制御。
+- 弱点/留意：①本日塩分8〜9gとやや高め（昼サラダ2.7＋カニカマ1.2が主因＋夕の麺）。28セット＋発汗でNa許容は広く、翌日水分で戻す。②昼に物足りなさ＝減量期の昼が軽すぎる兆候。続くなら昼のボリューム（低カロリーで満たす副菜）を一段上げる。
+
+### トレ総評（92/100）
+- 雨でランなし→朝ジムで脚の日として大ボリューム（**計28セット**：胸6・脚7・背中9・肩6）。
+- **自己ベスト更新が複数**：背中ラット・シーテッドローとも70kg×8×3で確立（従来63kg）、肩ショルダープレス50kg余裕→57kg×10×3へUP。グルートマシン撤去はレッグプレス殿筋狙い(93×12×3)で代替。
+- 「胸はやった感が薄い／背中は筋肉痛」は効き差でなく刺激の新しさの差（背中は初挑戦重量＝未経験刺激）。**筋肉痛は成長指標ではない**。
+- 夜：ダンベルベンチを"胸の日"として実施＋トレ後アシッド（明日6/29ベンチBは軽めでバランス）。
+- 課題：**ダンベルベンチの実kgが未記録**＝胸の漸進管理ができていない。胸を伸ばすなら次回から実kg記録が必須。
+
+### 体重
+- **74.5kg（夜・入浴後／最重条件）**。糖質グリコーゲン＋結合水・トレ後の水分保持・Na保水・食後が重なる1日で最も重いタイミングで、脂肪増ではない（6/27夜も同条件で74.5kg＝再現性）。単日判定せず同条件（夜どうし/朝どうし）の週平均で追う。
+
+### 今日のポイント（メモ）
+- **高重量の初挑戦は初日に潰し切らない**：背中70kgは「きつい」(RIR0-1)で2〜3セット＋ドロップに留め、フォーム破綻・故障を回避。新重量は初回フォーム固め→次回攻める、が漸進の正道。
+- **マヨ vs ドレッシングは脂質"量"だけでなく"質"で判断**：今回はアマニ油ドレ(オメガ3)が量・質とも上。ただしALA→EPA/DHA変換は男性で低く、直接DHAは青魚優先（R3）。一度「ドレッシングが軽い」と裏取りなしで断定→撤回した反省も記録。
+- **物足りなさは栄養不足でなく満腹感(固形の食べ応え)不足**。ドリンクでP30取った日は固形の"食べた感"が薄い。低カロリー副菜・汁物・酢の物・噛み応えで満たすのが正解。
+
+### 翌日への一手
+- 6/29(月)はラン無し→**ジムで本気の追い込み（今週の主力）**。胸主役＋**ダンベルベンチは実kg記録**（漸進の起点）。食事は赤字だが**P150g維持**（赤字は糖質・脂質で作る）。
+- 火〜水（野球・居酒屋）に備え、月でクリーンな赤字を稼ぐ。塩分は本日やや高め→明日以降水分で戻す。
+
+---
+
+## ▼ 06/27（土）ラン再開日（朝ジム＋ラン＋夜ベンチ／3本立て）
+
+### 食事総評（85/100）
+- **タンパク質：約156g / 150g（達成 ✅）**。朝36.2（チキン＋おにぎり＋ザバス）＋ラン後ティゴラ26.4＋昼約37（炒め＋ブロッコリーチキン＆エッグ20.6＋ご飯）＋夕約36（チキン南蛮＋明太春巻き＋ご飯）＋ベンチ後アシッド20.0。寝る前ティゴラは無しで上振れ最小に着地。
+- **カロリー：約2,150kcal**で維持枠2,000〜2,100にほぼトントン〜わずか上。減量を強く進める日ではないが、P150g最優先の結果として合格。
+- 良かった点：①夕食でラーメンでなくチキン南蛮を選びP確保＋糖質・塩分を抑えた（7/7の方向に合う）。②カロリミットを昼で使わず本日最こってり＝夜の揚げ物の食前に的中。③糖質は全体に抑制できている。
+- 弱点：脂質が夕食（チキン南蛮＋春巻き）で高め。翌日を低脂質寄りにして週でならす。ビール1杯は許容範囲。
+
+### トレ総評（80/100）
+- 3本立て（朝ジム＋ラン＋夜ベンチ）を実施。前進が大きい日。
+- 朝ジム：チェストプレス 50×10×3 → 57×10 と、久々でも前回working（70）に対し順調な戻り。短期デトレーニングで筋力がほぼ落ちないことと整合。
+- ラン：6/19以来の再開を実行。ただし**直前の飲食で腹痛→分割**になり十分に走れず（ラン約2.5km＋ウォーク）。ペース5'26〜5'58・HR125〜146はZ2上限寄りで、再開直後はもう少しゆっくりでよい。
+- 夜ベンチ：パターンB定番量を実施＋トレ後アシッド。胸が朝チェストプレスと重なる日だったが完遂。
+- 課題：①ラン前の飲食タイミング（下記ポイント）。②ジム・ベンチとも重量×回数の記録が薄く、漸進検証ができない。次回から数値を残す。
+
+### 体重
+- **74.5kg（夜・夕食＋ビール＋トレ後）**。1日でいちばん重く出る条件（糖質・塩分・水分・食後）で、脂肪増ではない。単日で判断せず同条件の週平均で追う。朝（同条件）で見れば落ち着く見込み。
+
+### 今日のポイント（メモ）
+- **ラン前の直前飲食で腹痛→分割**。朝食（おにぎり＋チキン＋ザバス）がラン開始11:04に近すぎた。固形・プロテインはラン30〜60分前までに終え、直前は水分程度にとどめる。再開期の重要な運用知見（insights Q1-7／Q4-2に接続）。
+- カロリミットは「1日1回・本日最こってり食の食前」。昼で使わず夜の揚げ物に回すのが正しい当て方（今日実践できた）。
+
+### 翌日への一手
+- 6/28（日）は自由トレ＆ラン日。**ラン前は固形・プロテインを30〜60分前までに終え、直前は水分のみ**（今日の腹痛の学びを実装）。
+- 脚を入れるならこの日（週で唯一）。脂質は今日やや高めだったぶん低脂質寄りでならす。P150g継続。
+
+---
+
+## ▼ 06/26（金）在宅・通常運転初日（雨でラン不可）
+
+### 食事総評（88/100）
+- **タンパク質：約163g / 150g（達成 ✅・やや上振れ）**。朝で厚く積む立ち上がり（ティゴラ＋チップス分割＝朝〜午後で約47g）が効き、夕食にチャンプル＋鮭が乗って余裕を持って着地。
+- 良かった点：朝に「予定」を立て、実績がほぼ計画どおり。カロリミットを本日最大食（昼チャンプル＝炒め油＋豚＋ご飯）の食前に的中。EPA・DHA／マルチを脂質のある昼に同席。
+- 弱点：昼が「ゴーヤチャンプルのみ（鮭なし）」で計画よりP15g前後ダウン。ただし夕食でチャンプル＋鮭にして回収。昼・夕でチャンプル2食＝炒め油が連続し脂質はやや重め（夜は油控えめ指示済み）。
+- プロテインチップス（BODY STAR／P20.6g）を保険として今日1袋使用。届かない昼を埋める間食として機能。
+- 次に活かす1点：昼を「チャンプル＋魚」で固める日は鮭を省かない。省くと昼P15g欠ける。
+
+### トレ総評（80/100）
+- 朝：ストレッチ＋軽い自重（軽め）。夜：久々のベンチ（パターンB）を実施＝1日2回トレ。トレ前クアン／トレ後アシッド／就寝前ティゴラ。
+- 効果：通常運転初日でベンチ（パターンB）を再開できたのは前進。出張中の自重のみ・漸進なしから一歩進んだ。
+- 課題：ベンチの重量×回数が未記録のため漸進の検証ができない。次回からセット内容を残すと、ブランク明けからの戻りが追える。
+
+### 体重
+- **72.8kg（入浴・発汗後）**。6/24夜74.5kg → −1.7kg。出張の水分・グリコーゲンが抜けた通常化の動き。単日で喜びすぎず週平均で確認。8/31夜72kg目標の射程内。
+
+### 今日のポイント（メモ）
+- **プロテインチップス1袋を午前・午後に小分けにして1日かけて食べたのが良かった**。20g級を分割＝1回の吸収有効域（20〜40g）に収まり合成効率が上がる＋空腹の谷を2回ふさげる。空腹起点の在宅日にハマった。今後の定番運用にする（insights Q1-8／core.mdに登録済み）。
+
+### 翌日への一手
+- ベンチを再開できたので、次回パターンBは重量×回数を記録して漸進を一点入れる。
+- ランのブランク（6/19以降）が継続。雨が上がったらZ2ランで持久の立て直しを再開。クレアチンは連日継続。
+
+---
+
+## ▼ 06/25（木）日帰り出張・昼読めない日
+
+### 食事総評（86/100）
+- **タンパク質：約150.7g / 150g（達成 ✅）**。出張明け即・日帰り＋昼が読めない難条件での達成は上出来。
+- 朝に「予定」を立て、実績がほぼ計画どおりに着地（計画→実績が噛み合った日）。
+- 良かった配置：読めない昼を外食（チキン南蛮）で確保→夕方コンビニで上乗せ→トレ後アシッド→寝る前ティゴラで150到達。カロリミットを本日最大食（チキン南蛮＝揚げ＋タルタル＋ご飯）の食前に的中。
+- 弱点：昼のチキン南蛮の脂質は高めだが、カロリミット投下と夜の脂肪0徹底で相殺。
+- 次に活かす1点：夕方の固形はP18級（サラダチキン）の方がスティック2本より効率が高い。読めない日は「P18級ドリンク＋固形1」の型に寄せると軽い。
+
+### トレ総評（76/100）
+- 帰宅後（23時台）に自重A（ワイド・ナロー・腹筋クロス）のみ。クアン未使用。トレ後アシッド→就寝前ティゴラ。
+- 効果：出張中の頻度維持＋トレ後ロイシンで合成方向。ただし自重のみ・漸進なし・追加種目なしで刺激量は軽め。
+- 次の一手：通常運転に戻ったらパターンB＋ブルガリアン等の高負荷を再開し、漸進を一点入れる。
+
+### 翌日への一手
+- 出張連投（6/21〜25）が終了→通常運転へ。体重は水分が抜けるまで判定保留、夜・週平均で見る。
+- ランのブランクが続いているので、持久の立て直し（Z2ラン）の再開を検討。クレアチンは連日継続。
+
+---
+
+## ▼ 06/24（水）出張3日目・愛知・昼抜き日
+
+### 食事総評（90/100）
+- **タンパク質：約171.8g / 150g（達成 ✅）**。昼抜き条件での150g超は見事。
+- 良かった配置：朝バイキングを本日最大食と判断しカロリミットを朝食前に投下。ひきずり鍋（鶏多め）・焼き魚・味噌煮の肉でP源を主役化、揚げ物は串カツ・エビフライ各1で抑制。夕は脂肪0ドリンク＋鶏＋魚肉で脂質約4gに徹底。
+- 弱点：ほぼなし。昼抜きでも朝で約70g積む立ち上がりが効いた。
+
+### トレ総評（85/100）
+- **1日2回トレ**。朝：自重A 27:36／平均HR81（名古屋）。夜：自重A＋サイドレイズ10×5 50:39／平均HR74（甲府）。
+- 効果：出張で空いた刺激を取り戻す好内容。夜にサイドレイズで肩も追加。クレアチン再開＋寝る前ティゴラで再飽和と夜間合成を確保。
+- 次の一手：自重中心なので、通常復帰後は高負荷（パターンB）に戻して漸進を再開。
+
+### 翌日への一手
+- 出張明け即・日帰り出張。昼読めない×夜コンビニ。朝に「予定」を立てて記録する運用を開始する。
+
+---
+
+## ▼ 06/23（火）出張2日目・移動
+
+### 食事総評（78/100）
+- **タンパク質：約135g / 150g**（未達だが移動連投の条件下では十分）。
+- 良かった配置：アルコール明けの朝を脂肪0ザバス＋塩分＋食物繊維でリカバリー。昼のこってり（フライドチキン＋カレー）をカロリミット＋夜の高タンパク低脂質で相殺。寝る前P20g。
+- 弱点：昼が高脂質。夜と寝る前で取り返したが150には届かず。
+- 次に活かす1点：移動日は昼が崩れやすいので、朝のP上積み（40g台）を標準化すると135→150に寄せやすい。
+
+### トレ総評（—／トレなし・移動日）
+- 移動でラン・筋トレ不可。6/19〜21の3連続高負荷の直後の2日オフ＝適正回復フェーズ。脱トレではない。
+
+### 翌日への一手
+- 翌日は昼抜き日。朝バイキングでしっかり、昼はP枠確保、夜で取り返す。クレアチンは出張明けに再開。
+
+---
+
+## ▼ 06/22（月）出張1日目・仙台・飲み会
+
+### 食事総評（88/100）
+- **タンパク質：約176g / 150g（達成 ✅）**。飲み会日に超過達成は満点級。
+- 良かった配置：居酒屋でも刺身・カツオ・ぶり・ほや・揚げてないチキンと高タンパク低脂質を主役化。カロリミットを飲み会序盤（食前）に投下。〆ラーメン回避。寝る前P40g（追いプロテイン＋ザバスバー）で夜間の異化対策。
+- 弱点：脂質源はジャガバター一口・三角揚げ程度で軽微。維持モードの「守り」はほぼ満点。
+
+### トレ総評（—／トレなし・移動日）
+- 終日移動・MTGでラン・筋トレ不可＝維持モード初日。食事で筋肉を守る方針どおり。
+
+### 翌日への一手
+- 移動2日目。昼夜が読めない日は朝でPを稼いで土台を作る。アルコール明けは水分・塩分のリカバリーを優先。
+
+---
+
+## ▼ 06/21（日）
+
+### 食事総評（72/100）
+- トレ日として合格、攻めの減量日としては及第点。守りは○、弱点は脂質。
+- **タンパク質：約138〜148g / 150g**（アクアで底上げして死守、ほぼ達成）
+- 脂質：推定70〜85gで目標超過寄り。カロリーも維持寄り＝今日は赤字が薄い日。
+- 良かった配置：昼に糖質→トレ前クアン→トレ後アシッド→カロリミットを最大食に集中→トレ日禁酒。教科書通り。
+- 次に活かす1点：揚げ物が重なる日は一品を非揚げのP源（冷奴/刺身/サラダチキン）に替えると脂質を抑えつつ食品Pが上がる。
+
+### トレ総評（80/100）
+- パターンB＋ブルガリアンスクワット（6/20と同一・重量回数とも同じ）。トレ前クアン／トレ後アシッド28g。
+- 効果：全身刺激を再現、ロイシンでmTOR起動。昼糖質で筋グリコーゲンの土台があり後半垂れにくい。
+- 漸進性過負荷：なし（前回と同一）。トライセプスエクステンションは見送り＝三頭の直接刺激が未充填。
+- 次の一手：次回は漸進を一点（重量↑/回数↑等）＋トライセプスエクステンション10kg×12×3を最後に追加。
+
+### 翌日への一手
+- 出張1日目＝維持モード。Pと睡眠を死守すれば下げ基調は崩れない。
+- 朝は固形＋プロテインでPを多めに確保し、夜の揚げ物偏重を繰り返さない。
+
+---
+</script>
+
+<script type="text/plain" id="src-events"># イベント目標（events.md）
+
+※突発・期日付きのイベント目標の正本。恒常目標（core.md）とは別管理。
+※各イベントはメタ行（date / status / type）＋本文で持つ。ビューアのカウントダウンが date・status を読む。
+※status は open（進行中）/ done（終了）。期日を過ぎた open は自動で「終了」表示になる。
+
+---
+
+## 6/28 脚の日・自己ベスト更新（カット集中ウィンドウ初日）
+<!-- date: 2026-06-28 -->
+<!-- status: done -->
+<!-- type: トレ -->
+
+- 雨でランなし→朝ジムで脚の日・計28セット（胸6/脚7/背中9/肩6）。**背中ラット・ロー70kg×8×3、肩57kg×10×3を本番重量に更新**（自己ベスト）。グルートマシン撤去はレッグプレス殿筋狙い(93×12×3)で代替。夜はダンベルベンチを"胸の日"として実施。
+- 食事：P約165〜170g達成。低脂質高P・カーボラスト・アマニ油ドレ採用。塩分は本日8〜9gとやや高め→翌日水分で戻す。詳細は log.md / review.md 参照。
+
+## 6/30 野球観戦（変則スケジュール）
+<!-- date: 2026-06-30 -->
+<!-- status: open -->
+<!-- type: 外出 -->
+
+- 深夜2〜4時起き→7時台電車の変則日。夜はハンバーガー（ポテト無・ダブルパティ・無糖ドリンク・バンズ最後）。トレ完全オフ。深夜帯はBMAL1ピークのため糖質・菓子を入れずタンパク質のみ。昼までにプロテインでP60〜70確保。詳細は日別プラン参照。
+- ※帰宅・就寝時間 未定（確定後に夕食の置き方を再調整）。
+
+## 7/1 焼き鳥居酒屋
+<!-- date: 2026-07-01 -->
+<!-- status: open -->
+<!-- type: 外食 -->
+
+- 朝に自宅自重A。夜は居酒屋（R6）：赤身串中心・〆は味噌汁・蒸留酒/ハイボール優先・ビール1杯まで・二次会なし・最初の一品前にカロリミット。塩分は翌7/2に水分多めで戻す。詳細は日別プラン参照。
+
+## 7/2 サウナ（自宅トレ後／むくみ・塩分リセット）
+<!-- date: 2026-07-02 -->
+<!-- status: open -->
+<!-- type: 回復 -->
+
+- 自宅トレ→サウナの順。火〜水の塩分・むくみを抜く日。落ちるのは水分で体脂肪は減らない＝狙いはむくみ排出と回復。7/7の3日前のため発汗の持ち越しなし。水分は出た分しっかり戻す（水＋電解質）。アルコールは合わせない。詳細は日別プラン参照。
+
+## 7/4 昼外食
+<!-- date: 2026-07-04 -->
+<!-- status: open -->
+<!-- type: 外食 -->
+
+- 昼のみ外食（R6：タンパク/野菜→糖質最後、ご飯少なめ。揚げ物を選ぶならこの昼枠）。朝に自宅トレ。夜は低脂質高Pで軽く。P150g維持・糖質は枯らさない。詳細は日別プラン参照。
+
+## 7/5 昼外食（追い込み最終日）
+<!-- date: 2026-07-05 -->
+<!-- status: open -->
+<!-- type: 外食 -->
+
+- 昼外食（土と同じR6戦略）。夜は自宅トレで今週の刺激を締める（7/6以降は抜く）。P150g。詳細は日別プラン参照。
+
+## 7/7 TANITA測定
+<!-- date: 2026-07-07 -->
+<!-- time: 11:00 -->
+<!-- status: open -->
+<!-- type: 測定 -->
+
+- 期日：2026-07-07（火）11:00
+- 種別：TANITA体組成測定（3〜4週ごとの再測定チェックポイント）
+- 起点：2026-06-27（この時点で残10日）
+- ゴール（core.md の恒常目標にひも付け）：
+  - **体重**：8/31夜72kgへ向かう中間確認（前回比で下げ方向に進んでいるか）
+  - **筋肉量**：55.0kg を維持（割らない）
+  - **体脂肪率**：21.2%（2026-05-05 基準）より下げる
+- 仕上げ方針：6/28〜7/5で実質の減量（P150g死守＋ゆるい赤字＋予定どおりのトレ）、7/6はテーパー（追い込まない・糖質普通・塩分控えめ・アルコールなし）、7/7当日は測定前に発汗運動をせず水分は普通量・トイレを済ませて条件を一定にする。クラッシュ脱水はしない。
+
+### 日別プラン（6/28〜7/7／このイベントに向けた日々の計画）
+
+> ゴール（core.md）＝年内に夜70kg・8/31までに夜72kg・筋肉量55.0kg維持・体脂肪率21.2%未満。その中間チェックが本イベント7/7 TANITA。以下はそこへ向けた日別の計画。粒度は「予定」と同じ。立てられない日や状況変化（雨など）は当日調整して上書きする。
+
+#### 2026-06-28（日）雨でラン不可→朝 筋トレ追い込み＋夜家トレ（夕食=冷やし中華）
+- 流れ：朝食→朝 筋トレ追い込み→昼食→夕食（冷やし中華）→夜家トレ。今日は雨でランなし。前日(6/27)が高脂質だったので低脂質でならす＋7/7前で塩分控えめ。
+- 食べ方の原則（references.md/ターザンメモ）：タンパク質・具を先→野菜→糖質（麺）は最後（カーボラスト）。青魚優先。酢の物・緑茶（内臓脂肪・血糖）。発酵食品。主食少なめ（ロカボ）。
+- 朝食（筋トレ前）：ローソン蒸し鶏（P30.3・脂2.1・糖0.2）＋もち麦昆布おにぎり（P5.1・糖質28.8・食物繊維8.1）＝約P35g。追い込みは筋グリコーゲンを使い切りやすいので糖質を少し足す。雨でランなし＝朝の糖質OK。
+- 昼食（高P・低〜中糖質）：焼き魚定食 or 豚しゃぶサラダ＋茶碗蒸し＋酢の物＋緑茶。麺は入れない（糖質は夜の冷やし中華へ）。筋トレ多めなので糖質をゼロにはせず低GIで適度に。P30〜35g。
+- 夕食（冷やし中華）：具（蒸し鶏・卵・ハム・チャーシュー）を先→麺は最後。タンパク増し＋納豆/冷奴でP底上げ。酢を効かせタレはかけ過ぎない。冷たい麺＝レジスタントスターチで血糖ゆるやか。濃いタレ控えめ（塩分）。
+- トレ：朝＝筋トレ追い込み（脚を入れるなら週で唯一この日・RIR0〜1まで攻めてよい／フォーム維持の範囲）。夜＝家トレ＝自重A（腕立てワイド20×5・ナロー20×5・腹筋クロス20×5、回復寄り）。麺は夜トレ後に食べてグリコーゲン補給に当てる。
+- P計画（目標150g超）：朝35＋朝トレ後ティゴラ26.4＋昼33＋夕（冷やし中華＋増し＋納豆）28＋夜トレ後アシッド20＋寝る前ティゴラ26.4＝約170g。
+- サプリ：クレアチン朝・継続／朝トレ後ティゴラ／クアン=夜トレ前（任意）／アシッド=夜トレ後／カロリミット=本日最こってり食の食前（低脂質なら不要可）／EPA・マルチ=魚等に同席。緑茶・酢を食事に。
+- 水分・塩分：通常。麺の日なので塩分は翌日に水分で戻す。
+
+#### 2026-06-29（月）ラン無し→ジムで本気の追い込み（今週の主力トレ日）／食事は赤字
+- 流れ：朝食→ジムで追い込み→昼食→夕食。火・水がトレ困難なため今週の刺激をこの日に集中。
+- トレ：**ジム・本気の追い込み**。胸を伸ばす意向を反映し胸を主役（**ダンベルベンチは実kgを必ず記録**＝漸進管理の起点）。6/28で背中・脚を追い込み済みのため背中・脚は軽め、胸・肩・腕に重点。
+- 食事：**赤字を作る日。ただし赤字は糖質・脂質で作り、Pは削らない**（P150g維持＝筋肉量55kg死守）。低脂質高P・カーボラスト・主食少なめ。緑茶/酢を毎食。
+- P計画：朝35＋トレ後ティゴラ26.4＋昼33＋夕33＋寝る前ティゴラ26.4＝約153g（赤字でもPは確保）。
+- サプリ：クレアチン朝／クアン=トレ前／アシッド=トレ後／カロリミット=最こってり食前。
+- 水分・塩分：通常。
+
+#### 2026-06-30（火）変則（深夜2〜4時起き→7時台電車）／夜ハンバーガー／トレ完全オフ
+- 主眼：食べ過ぎ管理より**睡眠不足のダメージ管理**。深夜帯はBMAL1ピーク＝脂肪を溜め込みやすい時間。
+- 2〜4時 起床：水＋ブラックコーヒー。空腹なら**タンパク質のみ**（ゆで卵・サラダチキン・プロテイン）。**炭水化物・菓子は入れない**（BMAL1ピーク）。
+- 7時台 電車：ここを本当の朝食に。高P低GI（ゆで卵2＋サラダチキン、おにぎり1個まで）。電車で仮眠。
+- 午前〜昼：**プロテイン1本持参で昼までにP60〜70確保**（今日の生命線）。
+- 夜 ハンバーガー（R6）：サラダ→パティ→バンズ最後（カーボラスト）。**ダブルパティでP稼ぐ／ドリンク無糖／ポテト無し（常態）**＝ほぼ満点。バンズ1枚外しでさらに糖質減。
+- トレ：**完全オフ**（寝不足のトレはコルチゾール過多＋ケガリスク。月曜に追い込む前提）。
+- カフェイン：14〜15時で打ち止め（火曜夜に睡眠を返す）。
+- P計画：深夜P（卵/プロテイン）＋朝食＋昼プロテイン＋夜バーガー（ダブルでP30前後）＝約150g。
+- 水分・塩分：寝不足・外食で一時的に水を抱えるが単日では崩れない。**木曜で戻す**。
+- ※帰宅・就寝時間 未定。確定後に夕食の置き方と睡眠回復量を再調整。
+
+#### 2026-07-01（水）朝 自宅自重A／夜 焼き鳥居酒屋
+- 流れ：朝 自宅で軽く自重A→昼までにP稼ぎ→夜 焼き鳥居酒屋。
+- 朝：自重A（ワイド20×5・ナロー20×5・腹筋クロス20×5）で活動を作る。高P低糖質。
+- 昼：朝＋昼でP70目安。焼き魚 or 鶏むね定食＋酢の物＋緑茶。
+- 夜（居酒屋・R6）：食べ順＝お通し/サラダ・タンパク質→焼き鳥→**〆は麺/丼でなく味噌汁**（50ヶ条22）。串は**赤身中心**（むね・ささみ・砂肝・レバー・つくね）、**レバーは最初の肉に最適**。皮・ぼんじり控えめ。最初の一品前に**カロリミット**。
+- 酒：**蒸留酒・ハイボール優先、ビールは1杯まで。二次会なし**（50ヶ条50）。
+- トレ：朝の自重Aのみ（夜はトレなし）。
+- P計画：朝＋昼でP70＋焼き鳥P20〜30＋帰宅後アシッド（任意）＝約120〜150。寝る前ティゴラで150g前後。
+- サプリ：クレアチン朝／カロリミット=居酒屋の最初の前。
+- 水分・塩分：飲酒・居酒屋の塩分ぶん、**翌7/2に水多めで戻す**。
+
+#### 2026-07-02（木）自宅トレ→サウナ（火〜水の塩分・むくみリセット日）
+- 流れ：朝食→昼食→夕食→**自宅トレ→サウナ**。前夜居酒屋＋火曜ぶんの塩分・むくみを抜く日。
+- 順序：**トレ→サウナ**（先にトレで追い込み→そのあとサウナで回復。逆にしない）。
+- サウナの位置づけ：落ちるのは水分で体脂肪は減らない。狙いは**むくみ・塩分排出＋回復・睡眠の質**。7/7の3日前のため発汗の持ち越しは無し。
+- **水分は出た分しっかり戻す**（サウナ後〜就寝で水＋電解質：味噌汁・塩少々）。ここで水を絞ると逆効果。**アルコールは合わせない**。
+- 食事：低脂質高P・塩分控えめ・水分多め。P150g。発汗後プロテイン1杯。
+- サプリ：クレアチン朝／クアン=トレ前／アシッド=トレ後。
+- 水分・塩分：**塩分控えめ・水分多め**（火〜水の戻し）。
+
+#### 2026-07-03（金）自宅トレ（胸の漸進）
+- 流れ：朝食→昼食→夕食→夜 自宅トレ。
+- トレ：自宅トレ。**胸の漸進を狙う**（月のダンベルベンチ記録を見て前回超え。金→日が中1日のため無理はしない）。
+- 食事：低脂質高P＋野菜＋ご飯少なめ。緑茶/酢。P150g。
+- サプリ：クレアチン朝／クアン=トレ前／アシッド=トレ後／カロリミット=最こってり食前。
+- 水分・塩分：通常。
+
+#### 2026-07-04（土）昼外食／朝に自宅トレ
+- 流れ：朝 自宅トレ→昼 外食→夕食（軽め）。
+- 昼外食（R6）：食べ順＝タンパク/野菜→糖質最後、ご飯少なめ。**揚げ物・丼を選ぶならこの昼枠が正解**（50ヶ条38：揚げ物は昼）。
+- トレ：朝に自宅トレを入れて1日を締める。
+- 食事：夜は低脂質高Pで軽く。P150g維持。糖質は枯らさない（測定前にグリコーゲンを抜きすぎない布石）。
+- サプリ：クレアチン朝／カロリミット=外食の食前。
+- 水分・塩分：通常。
+
+#### 2026-07-05（日）昼外食／夜 自宅トレ＝追い込み最終日
+- 流れ：朝食→昼 外食→夕食→**夜 自宅トレ（今週の刺激を締める。7/6以降は抜く）**。
+- 昼外食：土と同じR6戦略。
+- トレ：夜に自宅でしっかり。ここまでで追い込みを終える。
+- 食事：低脂質高P＋野菜＋ご飯少なめ。P150g。
+- サプリ：クレアチン朝／クアン=トレ前／アシッド=トレ後。
+- 水分・塩分：通常。
+
+#### 2026-07-06（月）テーパー（軽め／休）
+- 流れ：朝食→（軽い運動or休）→昼食→夕食（早め・軽め）。
+- 食事：P150g。糖質は普通（枯らさない）・塩分控えめ・アルコールなし。夕食は早め＆軽め。
+- トレ：軽め or 休。強い追い込み・長距離ランはしない（走るなら20分以内の軽いジョグか散歩程度）。
+- P計画：朝32＋昼35＋夕33＋（任意）プロテイン＝約150g。
+- 水分：普通量（前日からがぶ飲みも我慢もしない）。
+- サプリ：クレアチン朝・継続（毎日継続なら筋内水分は一定で測定に有利不利を作らない）。
+
+#### 2026-07-07（火）測定日 11:00
+- 測定前は運動なし。発汗運動・サウナ・入浴で汗をかかない（脱水で体脂肪率が高く・筋肉量が低く出る）。
+- 起床後の水分は普通量。朝食は軽く、測定の2時間前までに済ませる。直前のドカ食いはしない。
+- 測定前にトイレ（尿・便）を済ませる。
+- 5/5基準と条件をそろえる（素足・薄着・同じような状態）。クラッシュ脱水はしない。測定後は通常運転に戻す。
+</script>
+
+<script type="text/plain" id="src-references">
+# 食事・栄養 リファレンス（references.md）
+
+> 外部ソース（書籍・雑誌・専門家）から取り込んだ食事・栄養の知識カタログ。
+> `insights.md` =「自分の運用で確立した日付非依存のQ&A」／本ファイル =「外部情報を構造化したリファレンス資料」。
+> 雑誌の逐語転載ではなく、要点を自分の言葉で再構成したもの（私的な学習メモ）。
+>
+> **出典**：Tarzan「おいしくて、太らない食べ方」特集ほか（監修：益崎裕章〈琉球大学〉／山田悟〈北里大〉／川端輝江〈女子栄養大〉ほか）
+
+最終更新：2026-06-27（v1.2：三大栄養素バランス・達人レシピを補完／R8 運動編）
+
+---
+
+## ■ 目次
+
+- R1. 太らない食べ方の50ヶ条（食べ順・食べ方・選び方・タイミング・行動）
+- R2. 食事の科学キーワード（血糖・脂肪・代謝）
+- R3. 油・脂質の知識
+- R4. オイルファースト & ロカボ
+- R5. 太りにくくする食材・成分
+- R6. 外食・コンビニ攻略（食べ順 & オーダー例）
+- R7. ちょい足しオイルのアイデア集
+- R8. 運動する人のオイルファースト（ファットアダプト）★ラン・筋トレ直結
+
+---
+
+## R1. 太らない食べ方の50ヶ条
+
+> 大原則は「知って」「意識する」こと。わずかな習慣の差が効く。
+
+### A. 食べ順（最初に何を口にするか）
+- **01 野菜から食べる（ベジファースト）**：食物繊維が糖の吸収を緩やかにする。
+- **02 タンパク質を早めに（プロテインファースト）**：肉・魚を先に摂ると脂肪が燃えやすい高代謝モードに切り替わる。野菜と一緒に。
+- **04 スープ・汁物を最初につける**：先にお腹に入れると、後の食べ物の消化・血糖が安定。
+- **05 糖質は最後に（カーボラスト）**：糖の吸収が緩やかになる。
+- **31 1食のおかずに3色以上**：緑・赤＝野菜、茶色＝タンパク質の目安で品数と栄養を確保。
+
+### B. 食べ方・噛み方・速度
+- **06 20分以上かけて食べる**：急激な血糖値上昇を避ける。総量が少なければ5分でも可。
+- **07 よく噛む（20〜30回）**：胃腸の負担減、消化促進、満腹中枢が働く。
+- **08 3口ごとに箸を置く**：ゆっくり食べると食後のエネルギー消費が増える。
+- **09 手間がかかる料理を選ぶ**（焼き魚など）：自然とゆっくり食べられる。
+- **26 お菓子は袋から器に出す**：食べた量を把握して食べすぎ防止。
+- **28 小皿を使う／29 小さなカトラリーを使う**：少量でも満足感、視覚的に満たされる。
+- **30 ごはん大盛り→並盛りに**：年単位でかなりのカロリー・糖質カット。
+- **33 食べ終わったらすぐ歯磨き**：追加の間食・デザートを断ち切る。口臭ケアも。
+- **34 スマホを見ながら食べない**：食事に集中（ながら食いは食べすぎる）。
+
+### C. 選び方（同じカテゴリならどっち？）
+- **03 ハンバーグよりステーキ**：食材の原形に近いほど消化がゆるやか＝血糖安定。
+- **12 加工食品はパッケージ裏をチェック**：原材料で「形が想像できないもの」は避ける（→UPF回避）。
+- **13 食パンと白米なら白米**：白米のほうがGI値が低い（食パンより血糖が上がりにくい）。
+- **14 肉と魚なら魚**：魚の脂（EPA/DHA）が血液をサラサラにし脂肪燃焼を助ける。
+- **20 ジャガイモ系のつまみは頼まない**：植物性タンパク質系のつまみに替える。
+- **21 飲むなら蒸留酒**：ウイスキー・ジン・ウォッカは糖質ほぼゼロ。
+- **22 シメは麺より味噌汁**：発酵食品で腸を整える。
+- **25 おやつに迷ったら高カカオチョコ**：カカオ70%以上は低GIで食後血糖の上昇がゆるやか。
+- **32 いい油を使う**：植物由来・魚由来。亜麻仁・エゴマなどのコールドプレス、スーパーフード系。
+
+### D. タイミング・体内時計（BMAL1ほか）
+- **35 寝る3時間前までに食べ終える**：消化時間を確保し睡眠の質を上げる。
+- **36 朝食は抜かない**：起床2時間以内に食べると体温が上がり基礎代謝が底上げ。
+- **37 3食は12時間以内に収める**：空腹時間を確保。
+- **38 揚げ物は昼に**：日中はエネルギー消費が多く、脂肪を溜め込むBMAL1も少ない。
+- **39 甘いものは午後3時限定**：BMAL1の分泌が1日で最も少なくなる時間帯。
+- **40 頻度を落とす**：3日に3回→週1回に。極論は「食べたいものは食べない」。
+
+### E. 食材・成分の習慣
+- **10 緑茶を飲む**：カテキンが脂肪吸収を抑える＋抗酸化。
+- **11 腹八分目**。
+- **15 発酵食品を取り入れる**：味噌汁・キムチ・納豆・ピクルス・ヨーグルトで腸内環境改善。
+- **16 タンパク質をきちんと摂る**：不足を補うと筋肉が作られ痩せやすい体質に。
+- **17 食物繊維の多い野菜を知る**：枝豆・こんにゃく・根菜類。
+- **18 「だし」を知る**：旨味成分が味覚を正常化し減塩に。
+- **19 1日1回、酢の物**：酢酸に内臓脂肪減少・血糖値上昇抑制効果。
+- **23 水分をこまめに摂る**。
+- **24 空腹になりすぎる前にヘルシーな間食**：200kcal以下（ナッツ・ヨーグルト）。
+
+### F. 行動・環境・メンタル
+- **27 丼ものよりサイドディッシュで皿数を増やす**。
+- **41 食べすぎても後悔しない**：罪悪感はストレスホルモンを増やす（チートデイの考え方）。
+- **42 空腹＝体脂肪燃焼中と捉える**：「辛い」を「今燃えている」に脳内変換。
+- **43 食べ物以外のご褒美を用意する**。
+- **44 誰かと一緒に食べる**。
+- **45 明るい場所で食べる**：暗い店は高カロリーを注文しやすい（コーネル大研究）。
+- **46 食べたものを記録する**：客観視で食習慣が改善。
+- **47 空腹時に買い物しない**：余計なものを買いがち。
+- **48 座る時間を減らし、立って食べる**：消費エネルギー向上。
+- **49 1駅歩いたら夜のおかずを1品増やしてよい**。
+- **50 二次会には行かない**：夜遅い飲食は脂肪・睡眠の質低下につながる。
+
+---
+
+## R2. 食事の科学キーワード（血糖・脂肪・代謝）
+
+### 血糖値スパイク
+食後の血糖値が急上昇→急降下する現象。ランチ後の強烈な眠気の主犯格。健常者の食後2時間値の目安は140mg/dL未満、200mg/dL以上は糖尿病域。スパイクのたびにインスリンが大量に出て、余った糖が脂肪に変わる。
+
+### インスリン抵抗性
+高血糖が続くとインスリンが効きにくくなる状態。すると膵臓はさらにインスリンを出し、悪循環に（高血糖＋高インスリンのW状態）。運動不足・炭水化物主体の食事が原因になりやすい。
+
+### 糖の分類（単純糖質に注意）
+糖は構造で3分類：**単糖類**（ブドウ糖・果糖）／**二糖類**（ショ糖・砂糖、麦芽糖、乳糖）／**多糖類**（でんぷん、オリゴ糖、デキストリン等）。自然界に「単純糖質」だけの形は存在せず、本来は食物繊維とセット。精製・加工で食物繊維がはがれた単純糖質（清涼飲料・加工食品）は血糖を急上昇させる。
+
+### GI値（グリセミック・インデックス）
+食後血糖の上がりやすさの指標。70以上＝高GI、56〜69＝中GI、55以下＝低GI。
+- 穀類例：ベイクドポテト85／フランスパン・餅83／コーンフレーク81／白米76／フライドポテト75／ベーグル72／玄米・うどん62／ビーフン61／スパゲッティ58／中華麺58／**そば46**
+- 菓子例：チョコケーキ87／ドーナツ75／ポップコーン72／クッキー・パンケーキ67／アイス61／ポテチ54／プリン44／チョコ43／**ヨーグルト36**
+- 注意：朝食ドーナツは高GI。主食を低GIに替えるのが基本。
+
+### AGEs（終末糖化産物）＝糖化
+糖の摂りすぎでタンパク質が劣化する現象（カラダが「焦げる」）。血中ブドウ糖がタンパク質と結合→シッフ塩基→アマドリ化合物→AGEs。初期反応は可逆だが、最終的なAGEsは排除不可能（不可逆）。シミ・シワ・動脈硬化などあらゆる老化を進める。
+
+### UPF（超加工食品／Ultra-Processed Food）
+添加物を含む超加工食品（スナック菓子・インスタント・レトルト等）。腸炎を起こし食欲を増やす。乳化剤などが炎症性に作用。原材料で「形が想像できないもの」を避ける（→50ヶ条の12）。
+
+### 内臓脂肪 vs 皮下脂肪 vs 異所性脂肪
+- **日本人は内臓脂肪を溜めやすい**（農耕民族の体質）。内臓脂肪は腸間膜などに溜まり、糖尿病・消化管周辺リスクに関わる。
+- **異所性脂肪（第3の脂肪）**：肝臓・腎臓・膵臓・心臓・筋肉など本来溜まらない場所に溜まる「劣化した油」。最もヤバい。
+
+### アディポサイトカイン（脂肪細胞が出す物質）
+脂肪細胞が健全なら善玉、肥大化すると悪玉を分泌しはじめる。
+- 善玉：アディポネクチン（動脈硬化抑制）、レプチン（食欲・糖脂質代謝の適正化）
+- 悪玉：PAI-1（血栓形成）、アンジオテンシノーゲン（高血圧）、TNF-α/IL-6（インスリン抵抗性・血糖上昇）、アディポネクチン低下（動脈硬化進展）
+
+### 脂肪肝＝MASLD
+酒飲み専用ではない。旧NAFLD（非アルコール性脂肪肝）→**MASLD（代謝機能障害関連脂肪性肝疾患）**に改名。進行：脂肪肝→MASLD→MASH→肝硬変／肝がん。MASHは肝硬変をスキップして肝がんに至るケースも多い。甘いもの好き・食べ過ぎでリスク大。
+
+### ミトコンドリア（エネルギー産生工場）
+太古に共生した細胞内小器官。酸素から生命活動の全エネルギーを作る。加齢で減り、活性酸素で老化が進む。**少しきつい運動**と**適度な空腹時間**（ホルミシス効果）で活性化。食事と運動のメリハリが大事。
+
+### 褐色脂肪細胞 / ベージュ脂肪
+- **褐色脂肪細胞**：脂肪を燃やす細胞。ミトコンドリア内のUCP-1が脂肪から熱を作る。肩甲骨・脇・背骨周辺に多いが加齢で減少。
+- **ベージュ脂肪**：白色脂肪が寒冷刺激などでベージュ化し、脂肪を燃やすようになる。寒冷刺激・特定の食材で誘導が期待される。
+
+### オートファジー
+2016年ノーベル賞（大隅良典）。古い細胞・タンパク質をリサイクルする仕組み。空腹時間で働く。16時間断食が有名だが12時間でも有効。まずは空腹の時間を設けることから。
+
+---
+
+## R3. 油・脂質の知識（監修：川端輝江）
+
+### 油と脂、中性脂肪
+- 常温で**液体＝油**、**固体＝脂**（まとめて「油脂」）。
+- 食事の脂質の約90%は**中性脂肪（トリアシルグリセロール）**＝グリセロール1個＋脂肪酸3個。脂肪酸の性質が中性脂肪の特徴を決める。
+
+### 脂肪酸の種類
+- **飽和脂肪酸**（パルミチン酸・ステアリン酸）：二重結合なし。肉の脂など。固まりやすい。
+- **不飽和脂肪酸**：二重結合あり。酸化しやすい。
+  - 一価不飽和：オレイン酸（オリーブオイル）
+  - 多価不飽和：**オメガ6（リノール酸）**／**オメガ3（α-リノレン酸、EPA、DHA）**
+- 二重結合が多いほど酸化しやすい。日本人の脂肪酸摂取は飽和:不飽和＝約1:2。
+
+### 炭素鎖の長さで性質が変わる
+- 長鎖／中鎖／短鎖。**中鎖脂肪酸（MCTオイル）**は門脈経由で素早く肝臓→即エネルギーになり、体脂肪として蓄積しにくい。
+
+### 必須脂肪酸（体内で作れない）
+- **リノール酸（オメガ6）／α-リノレン酸（オメガ3）**は体内合成できず食事必須。
+- α-リノレン酸の含有率：**エゴマ油61.3%／アマニ油59.5%**／菜種油8.1／大豆油6.6（サラダ油からも少量摂れる）。
+- 細胞膜（リン脂質二重層）を柔らかくするのに不飽和脂肪酸が不可欠。赤血球が細い毛細血管を通るのにも必要。
+
+### 三大栄養素のバランスと"見えない油"
+- 理想バランス：脂質20〜30%／タンパク質13〜20%／炭水化物50〜65%（厚労省 食事摂取基準）。脂質も重要な位置を占める。
+- 日本人は肉・魚・卵・乳・菓子などに含まれる"見えない油"の摂取が多く、調理に使う"見える油"より量が多い。だから質（オメガ3など）を意識する。
+
+### α-リノレン酸→EPA/DHA 変換の男女差・個人差
+- **男性は変換率が低い**：男性 EPA8%/DPA8%/DHA検出せず ⇔ 女性 EPA21%/DPA6%/DHA9%。
+  → **男性は青魚（EPA/DHA）を直接摂るのが有利**。
+- FADS遺伝子多型で代謝能力に大きな個人差（TT/TC/CC型）。
+- 奇数鎖脂肪酸：食物繊維・乳製品の摂取が多いほど血中で増える（健康指標）。→**脂質を増やすなら食物繊維もしっかり**。
+
+---
+
+## R4. オイルファースト & ロカボ（監修：山田悟）
+
+### 食べ順の進化：ベジファースト → オイルファースト
+- 油を最初に摂ると**インクレチン（GIP・GLP-1）**が出て、糖の吸収を緩やかにし満腹感を出す。
+- タンパク質でも満腹になる（インクレチンが出る）。
+- **カーボラスト（糖質を最後）**で食後血糖の上昇が最も抑えられる（糖尿病患者16人比較／BMJ Open Diabetes Res Care 2017）。
+- 油・タンパク質→野菜→**糖質は最後**が安定。
+
+### ロカボのゴールデンルール
+- 主食（穀物）を**半減**、タンパク質・脂質・食物繊維を**増**。
+- **1日の糖質量＝1食20〜40g × 3食 ＋ 間食10g ＝ 70〜130g**。
+- 主な主食の糖質（半分量）：白米茶碗1杯150g＝約55g（半分27g）／食パン6枚切1枚27g（13g）／うどん1玉240g＝50g（25g）／そば1玉170g＝40g（20g）／スパゲッティ1食190g＝58g（29g）。
+
+### オイルファーストで叶う3つの健康
+メタボリックドミノが倒れない／疲れにくい（食後の血糖値疲労を防ぐ）／「がん」予防（食後高血糖・酸化ストレス・大量インスリンを避ける）。
+
+---
+
+## R5. 太りにくくする食材・成分（監修：益崎裕章）
+
+### 短鎖脂肪酸
+腸内細菌が**食物繊維**から作る代謝物（酢酸・酪酸・プロピオン酸）。血糖値の急上昇抑制、脂肪の蓄積防止。未精製の主食・野菜・豆類の食物繊維を積極的に。
+
+### オメガ3脂肪酸（脂肪燃焼の助っ人）
+DHA・EPA（青魚）、α-リノレン酸（アマニ油・エゴマ油）。白色脂肪のベージュ化を促す可能性。動脈硬化・中性脂肪の改善で知られる。
+
+### ガレート型カテキン（緑茶）
+緑茶の渋み成分。内臓脂肪面積の減少が報告。ガレート型カテキン配合飲料を3か月摂取で内臓脂肪面積が減少（鈴木裕子ら／日本臨床栄養学会誌）。ペットボトルでも可、食事のファーストチョイスに。
+
+### γ-オリザノール（玄米由来ポリフェノール）
+抗肥満作用。脳でドーパミン受容体を改善し、高脂質・ジャンク食への欲求を軽減。玄米胚芽抽出エキス10mg/日以上の摂取で1〜2か月の血糖平均値・HbA1cが有意に低下（Masuzaki et al. Glycative Stress Research 2020）。主食を玄米に替えるのも手。
+
+### 酢（酢酸）
+内臓脂肪減少・食後血糖の上昇抑制。1日1回の酢の物。酢酸菌は腸内の良い菌を育てる（餃子などに酢こしょうも◎）。
+
+---
+
+## R6. 外食・コンビニ攻略
+
+### 共通の基本（オイルファースト的 食べ順）
+1. **低糖質・オイルリッチな一品**（ミックスナッツ、高カカオチョコ）
+2. **油とタンパク質の多い主菜・副菜**（唐揚げ、ツナサラダ）
+3. **最後に糖質**（ご飯半分、パン小1個）
+- 酒は**ハイボール・無糖サワー・蒸留酒**。糖質の多いビールは最初の1杯まで。
+
+### シーン別 食べ順
+- **居酒屋**：ハイボール→ナムル→トマトスライス（マヨ）→アジフライ→厚揚げ焼き→焼き鳥（皮・ぼんじり・もも）→チャーハン（シェア）
+- **牛丼店**：サラダ（オイル入りドレッシング）→チーズ牛丼（ご飯超少なめ）→お茶
+- **コンビニ**：唐揚げ→ゴボウサラダ→茹で卵・納豆→春雨スープ
+- **ホテルブッフェ**：オムレツ＋ウインナー→ツナサラダ→ヨーグルト（ジャムなし）→クロワッサン＋ブラックコーヒー
+- **イタリアン**：スパークリングワイン→エスカベッシュ→カプレーゼ→ミラノ風カツレツ→カルボナーラ（シェア）
+- **ステーキ店**：サーロイン→付け合わせ（ブロッコリー・ホウレンソウ）→コンソメスープ→ロールパン1個
+- **キャンプ飯**：鮭ハラス→ブロックベーコン燻製→チーズ燻製→豚スペアリブ→野菜焼き→焼きトウモロコシ
+- **ハンバーガー**：サラダ（オイル入りドレッシング）→ダブルチーズバーガー→無糖ドリンク
+- **焼き肉店**：上牛タン→豚カルビ→牛カルビ→チョレギサラダ→クッパ（ご飯シェア）
+
+### 管理栄養士チェックのオーダー例
+**居酒屋（朝日奈央／管理栄養士チェック）**
+- 心得：①食材の原形が残るメニューから ②海鮮メニュー（低脂質高タンパクのイカ・タコ）がイチオシ ③マヨ等の調味料は控えめ（マヨ大さじ1＝99kcal）
+- 例：いか焼き（生姜醤油・低脂質高タンパク・タウリン）／うめきゅう（噛み応えで暴食防止）／地鶏ねぎま（鶏×ネギで血糖抑制・腸内環境）／なすみそ炒め（揚げより炒め、白米は冷ますとレジスタントスターチ増）／海老グラタンやピンピン焼き（山芋＝低カロリー高タンパク）はたまにアリ
+
+**焼肉（稲本潤一／管理栄養士チェック）**
+- 心得：①温かいスープから（お腹を温め代謝アップ）②ご飯を序盤から（栄養・水分・冷ますと糖質→食物繊維化）③キムチはマスト・サンチュも◎（タンパク質＋食物繊維で吸収ゆるやか）
+- 肉は脂の多いカルビより**サガリ・ハラミなど赤身**を。レバーは約132kcal/100gで最初に食べる肉として最適。タンも意外と脂質多め＝ゆっくり味わう。シメは冷麺より、肉やご飯を食べていれば肉は少なめに。
+
+**町中華（マキタスポーツ／管理栄養士チェック）**
+- 心得：①タンパク質をまず摂取（ベジ＋プロテインファースト）②野菜はピーマン・ブロッコリー（ビタミンA・C・抗酸化トップクラス）③お酢を餃子等に（酢酸菌が腸の良い菌を育てる）
+- 例：ピーマンと鶏肉炒め（油でβ-カロテン吸収UP）／きゅうり味噌（野菜＋発酵食品スターター）／餃子（PFCバランス◎の"完全栄養食"説）／麻婆豆腐（植物性×動物性タンパク＝理想比1:1）／ニンニク（ビタミンB1吸収促進、糖質・アルコール代謝UP）
+
+### コンビニ 1日の組み立て例（セブン基準）
+- **朝**：手巻きおにぎり＋カフェラテ（無糖）＋ほっけ塩焼き＋ほうれん草胡麻和え ＝ **545kcal／P32.7g**（朝食は抜かない・魚中心）
+- **昼**：ざるそば＋野菜一日これ一本＋茶碗蒸し＋豚しゃぶサラダ ＝ **651kcal／P44.9g**（定食をカスタム、P40g目標）
+- **間食**：ヨーグルト＋高カカオチョコ半袋 ＝ **207kcal／P12.7g**／プロテインバー各種（おやつ＝タンパク質チャンス）
+- **夜**：ミニ冷し中華＋1/3日分の野菜もっちり餃子スープ ＝ **444kcal／P22.6g**（遅い夕食は消化の良さ重視・麺少なめ）
+
+---
+
+## R7. ちょい足しオイルのアイデア集
+
+定番食材に油を垂らしてオイル料理化（脂質量の目安／大さじ1＝約14g）。
+- リンゴ＋カマンベール、アーモンド
+- 味付きメカブ＋グレープシードオイル
+- 冷や奴＋エゴマオイル（醤油の塩分を油に置換＝減塩）
+- キュウリの糠漬け＋クリームチーズ、クルミ
+- ホウレンソウの和え物＋クルミ
+- サラダチキン＋ヘーゼルナッツ
+- 味噌汁＋アボカド（半分60gで脂質約10g）
+- 小麦ブランシリアル＋牛乳＋MCTオイル
+- 卵かけご飯＋ゴマ油（卵黄＋ゴマ油で血糖上昇を抑制）
+- 納豆＋アマニオイル（タレなしでも大豆の旨味）
+
+### オイルの達人レシピ（佐藤幸二シェフ／ポルトガル料理〈クリスチアノ〉）
+- **真ダラとグリーンオリーブのマリネ（342kcal）**：茹でた真ダラを、刻んだグリーンオリーブ・キュウリ・赤玉ねぎ・ケッパー・ディルと和え、EXVオリーブオイルとレモンで仕上げる。タラのビタミン吸収率も上がる。
+- **青野菜のケイジャンフリット（403kcal）**：下茹でした青野菜（ピーマン・ブロッコリー・スナップエンドウ・アスパラ・菜の花）をケイジャンスパイス衣で揚げ、赤ワインビネガー＋オリーブオイルのソース（ピカーダ）でさっぱりと。
+
+---
+
+## R8. 運動する人のオイルファースト（ファットアダプト）
+
+> 監修：山田悟。アスリート＝「高タンパク・低脂質」のイメージが強いが「運動にこそ油が必要」。★ラン・筋トレに直結。
+
+### 運動のメインエネルギーは脂肪
+- エネルギー源は糖質（グリコーゲン）と脂肪。貯蔵量が桁違い：体脂肪率10%のスリム体型でも体重65kgなら脂肪約6.5kg＝1g7.2kcalで**約46,800kcal**。一方グリコーゲンは筋＋肝に約300g＝1g4kcalで**約1,200kcal**。脂肪がメイン燃料なのは自明。
+- 軽い運動（ウォームアップ程度）はエネルギーの約90%を脂肪が供給。中強度（60〜70%）でも脂肪が主役。強度が上がると糖質・筋肉内中性脂肪も追加されるが、それでも脂肪割合が多い（出典：Am J Physiol 1993）。
+
+### 脂質適応状態（ファットアダプト）に2〜4週で切り替わる
+- 糖質を控え油から脂質を多めに摂る食生活を2〜4週続けると、脂肪をエネルギーに変えるのが上手な「脂質適応状態（ファットアダプテーション）」になる。エリートが採用。
+
+### 油を控えすぎる危険＝LEA（Low Energy Availability）
+- 「油は太る」と脂質を避けると、運動消費を差し引いた利用可能エネルギーが不足＝LEA。月経など生体機能の維持エネルギーまで欠乏。
+- 米国の若年男子体操選手調査では約86%がLEA（除脂肪体重1kgあたり30kcalを下回る）。脂肪を減らした分は油を増やすのが正解。
+- 例：マテイ・トート（スロバキア競歩。2014年から糖質制限＋ファットアダプト→2016リオ五輪50km競歩 金）。
+
+### 筋トレでもファットアダプトでOK
+- 筋トレは高強度・瞬発で糖質利用率が高いが、1セッション40〜60分程度なら筋に蓄えたグリコーゲンでカバーできる。
+- 糖質は最小限に（インスリンを抑え、余分な脂肪取り込み・筋合成の邪魔を回避）。狙いは筋肥大＝材料のタンパク質を積極的に。
+- 例：長友佑都（2017年から山田医師が栄養アドバイザー、『長友佑都のファットアダプト食事法』）。
+
+### 運動直前の糖質はむしろパフォーマンスを下げる
+- 運動前に糖質→血糖上昇→インスリン分泌→運動と無関係の筋・脂肪にも血糖が流れ、肝心の運動筋がエネルギー不足に。さらに低血糖を恐れた脳が運動量を抑えようとする。
+- 例：和田毅（登板前日カーボローディングが習慣→2022年オフにファットアダプト転向。足がつらなくなりスタミナ向上・投球イニング増を実感）。
+
+### カーボローディングは不要かもしれない
+- 直前に糖質を詰め込み筋グリコーゲンを増やす作戦だが、ファットアダプトなら脂肪を多く使え糖質を節約でき不要。
+- ウルトラマラソン/アイアンマン選手20人を高糖質低脂質(HC)群・低糖質高脂質(LC)群に分け平均20か月。180分の高強度有酸素後でも、両群で筋グリコーゲン貯蔵量に差なし（出典：Metabolism 2016;65:100-110）。
+- 毎回高糖質でレースに臨むと食後高血糖を下げる能力が疲弊し糖尿病リスクも。
+
+### 持久力が上がる理由＝ミトコンドリア
+- 持久力は厳しい走り込みに加え「転写因子」のスイッチが入り、筋肉内のミトコンドリアを活性化・増加させることで上がる。
+- オイルファーストで油（→血中脂肪酸）を多く使うとミトコンドリアが増え持久力UP。持久トレ×オイルファーストは鬼に金棒。
+- 例：エリウド・キプチョゲ（リオ・東京五輪マラソン金、非公認で2時間切り、CGMブランド〈アボット〉と提携）。
+
+### 血糖値を測りながら運動する時代（CGM）
+- 心拍モニタリングは常識化、さらにCGM（持続血糖モニタリング）で運動中の血糖をリアルタイム把握する時代へ。
+- キプチョゲは「血糖値が乱高下するとパフォーマンスが定まらない」とし、血糖安定のため油の摂取を重視しているとみられる。
+
+---
+
+## 自分用メモ（fitness-log との接続）
+
+- **タンパク質150g/日死守**（core.md）と整合：R6のコンビニ例（朝P32.7＋昼P44.9＋間食P12.7＋夜P22.6＝約113g）。残りはプロテイン等で上乗せ。
+- **男性はDHA変換率が低い（R3）** → 青魚・魚オーダー（50ヶ条14、焼肉や居酒屋でも魚優先）を意識。
+- **外食・飲み会の日** → R6の食べ順（オイル/タンパク→野菜→糖質最後）、蒸留酒、シメは味噌汁。insights Q1-1/Q1-2 と併用。
+- **7/7 TANITA前の10日** → 内臓脂肪レベル10対策に R5（酢・緑茶カテキン・玄米/γ-オリザノール）と R1のD（夜遅・揚げ物・甘いものの時間管理）。
+- **R8（運動編）はランに直結だが要注意**：ファットアダプトは2〜4週かけて適応する大きな食事法の転換で、現行方針（リコンプ＋タンパク質150g／core.md）とは別物。今は「知識として保持」。導入する場合は段階的に・別途設計。
+- **ラン前補給の示唆（R8）**：高GIゼリーのドカ食いは血糖乱高下でむしろ垂れる可能性。Z2基調のランなら直前の大量糖質は必須ではない（※方針変更ではなく留意点）。
+
+</script>
+
+<script type="text/plain" id="src-core">
+# コア設定（フィットネス記録）
+
+最終更新：2026-06-26
+
+---
+
+## ■ 基本情報
+
+- 氏名：塩島 諒輔
+- 32歳 / 170.0cm
+- 体重：**夜 約74kg**（記録は夜基準で統一。朝ラン後は参考値）
+- 体脂肪率 21.2% / 筋肉量 55.0kg / 除脂肪量 58.0kg（2026-05-05 TANITA）
+- 基礎代謝 1635kcal / 内臓脂肪レベル 10（やや過剰の入口）
+- 推定最大心拍 約188（220−32）
+
+---
+
+## ■ 目標（2段階）
+
+- **中間：8/31までに 夜72kg**（−2kg・堅実ライン・最優先）
+- **最終：年内（2026年中）に 夜70kg**（−4kg）
+- 減量はすべて脂肪から。筋肉量55kgは維持〜微増
+- 方針：**リコンプ（脂肪減＋筋肉維持〜微増の同時進行）**
+  - 成立条件：体脂肪21%・トレ歴あり・タンパク質150g確保 → 両取り可能
+- 伸びしろは上半身・腕（脚は完成度高い＝筋肉量スコア +2）
+
+---
+
+## ■ 体重判定ルール
+
+- メイン記録＝**夜の体重**。比較は夜同士・**週平均**で判断
+- 水分による日々±1〜1.5kgの上下は無視
+- 朝ラン後・空腹時の値は参考のみ（判定に混ぜない）
+- **一時的な数値（単日・脱水・出張等）で計画を変えない**
+- 3〜4週ごとに TANITA 再測定 → 体重だけでなく筋肉量維持を確認
+
+---
+
+## ■ 心拍ゾーン（最大約188）
+
+| ゾーン | 心拍 | 用途 |
+|---|---|---|
+| Z2 | 130–145 | 脂肪燃焼・筋温存（減量期の理想） |
+| Z3 | 146–165 | 心肺・走力向上寄り |
+| Z4 | 166–176 | 高強度（筋トレ日は使いすぎ注意） |
+
+- 減量目的 → Z2中心。速いランは週1回まで、他はZ2イージーラン
+
+---
+
+## ■ カロリー / マクロ
+
+- 維持カロリー推定：約2,400–2,500kcal
+- **目標摂取：約2,000–2,100kcal**（ゆるい赤字 −350〜450）
+- 減量ペース：週0.25–0.4kg
+- **タンパク質：約150g/日（2g/kg）＝最優先・死守**
+  - 増やしても筋合成は頭打ち。150gキープが最適
+- 脂質：60–70g（削りすぎ禁止）
+- 炭水化物：180–220g（夕食側に寄せて筋トレのエネルギーに）
+- 赤字は固形物（昼・夕の量）で作る。プロテインは削らない
+
+---
+
+## ■ 手持ちサプリ / プロテイン（特性整理）
+
+### プロテイン3種
+
+| 共通名 | 製品 | 1食 | タンパク質 | 脂質 | 炭水化物 | 特性・向く場面 |
+|---|---|---|---|---|---|---|
+| **アシッド** | ザバス マッスルエリート アシッド（ココア） | 28g/105kcal | 20.0g | 1.6g | 3.2g(糖2.27) | ロイシン豊富なアシッドホエイ。筋合成狙い＝**トレ後向き**。水/牛乳250ml |
+| **ティゴラ** | TIGORA WPI（プレーン） | 30g/109.5kcal | 26.4g | 0.2g | 0.6g | WPI100%・高純度・低脂質低糖質・BCAA19,312mg・ドーピング検査済。**P最多→減量期の主力・朝**。水/牛乳200ml |
+| **アクア** | ザバス アクア（グレープフルーツ） | 28g/102kcal | 20.0g | 0.20g | 5.8g(糖5.3) | WPI100%・超低脂質・クエン酸2400mg。さっぱり。**運動前/中・朝食・間食向き**。水300–500ml |
+
+### 高タンパクスナック（間食・P補助）
+
+| 共通名 | 製品 | 1袋 | タンパク質 | 脂質 | 糖質 | 特性・向く場面 |
+|---|---|---|---|---|---|---|
+| **プロテインチップス** | BODY STAR プロテインスナック（おやつカンパニー／バーベキュー味） | 40g/163kcal | 20.6g | 5.2g | 5.9g | 粒状大豆たんぱくベース。**低脂質・低糖質でP20g台**。食物繊維4.8gで腹持ち◎・アルギニン1472mg。**P枠の間食補助として効率が良い部類**。今後も常備予定 |
+
+- **運用方針**：固形のおかず（鶏・魚・卵）が土台、チップスは**届かないぶんの上乗せ（保険）**。食事の置き換えではなく間食枠。タンパク質が150gに届かない見込みの日や、夕食が軽く着地した日に1袋（P20.6g）足して埋める。脂質・糖質を圧迫しないため減量期と相性◎。空腹時の朝の間食にも使える。
+- **推奨の食べ方＝小分け**：1袋（P20.6g）を一度に食べず、午前・午後など空腹の谷に分割する。1回20〜40gの吸収有効域に収まり合成効率が上がる＋空腹コントロールにも効く（6/26実証）。1日◯袋と枠を決めてから分割すれば量管理が崩れない。詳細はinsights Q1-8。
+- プロテインバーより**同等以上のPで脂質・糖質が低い**。おにぎりは糖質源でP4〜6g＝P補助には不向き（おにぎりはラン前グリコーゲン補給用途／insights Q1-7）。
+
+### アミノ酸・サプリ
+
+| 名称 | 性質 | 摂取条件 |
+|---|---|---|
+| クアン | 必須アミノ酸・ほぼ0kcal | **朝ラン前/トレ前**の筋分解防止。糖質ゼロで減量期向き |
+| アミノバイタル Active Fine | BCAA2200mg・ほぼ0kcal | **現在在庫なし**。クアンと同役割（買い足し不要＝insights Q2-1）。在庫復活時のみ朝ラン前/トレ前で代替 |
+| クレアチン | 毎日継続で筋内飽和が本質 | 1日1回どこかで。糖質と摂ると吸収やや有利。数日抜けても貯金は枯れない |
+| マルチビタミン | 代謝・リカバリー支援・脂溶性ビタミン含む | 脂質のある食事と |
+| EPA・DHA | 脂溶性 | 脂質を含む食事で吸収最大化 |
+| カロリミット | 糖・脂質の吸収抑制・**1日4粒上限** | 糖質脂質の多い固形食の直前。一番重い1食に集中 |
+
+**原則**：脂溶性（EPA・マルチ）は脂質のある食事とセットならタイミング自由。具体的な配置はその日のメニュー（固形食の有無・脂質量・運動時間）で決め、デイリーログに記録する。
+
+---
+
+## ■ 筋トレ（3パターン）
+
+### A. 自重のみの日（毎日できる最低ライン・器具なし）
+
+- 腕立て ワイド（胸）20回 × 5セット
+- 腕立て ナロー（三頭・腕）20回 × 5セット
+- 腹筋 左右クロス 20回 × 5セット
+
+### B. 自重＋ベンチの日（自宅でベンチ＋ダンベル可の日）
+
+**ベンチパート（先にやる／各40kg上限で調整／8〜12回で限界の重さ）**
+- ダンベルベンチプレス 35–40kg × 10 × 4（胸）
+- ワンハンドロウ 30–40kg × 10 × 4（背中・左右各）
+- ショルダープレス 25–30kg × 10 × 4（肩）
+- ダンベルカール 20–25kg × 10 × 3（腕・表）
+- トライセプスエクステンション 10kg×12×3 で開始（初回フォーム習得優先・2026-06-21〜）→ 漸進で12.5→15→20kgへ（腕・裏／三頭は腕の太さ約2/3＝伸びしろの本命。肘負担に注意・ネガティブ2〜3秒・肘固定・痛みが出たら即軽量化）
+- サイドレイズ 10–12kg × 15 × 3（肩）
+
+**自重パート（後に追い込み）**
+- 上記Aをすべて実施
+
+### C. ジムの日（土・日）
+
+- レッグプレス 79/93/93/86 × 各10
+- グルート 50/59/59/54 × 各10
+- チェストプレス 57/70/70/63 × 各10
+- ショルダープレス 36/50/43 × 各10
+- ラットプルダウン 50/63/57 × 各10
+- シーテッドロー 50/63/57 × 各10
+- インターバル 1–1.5分（高重量後2分）・60–70分で完結
+
+### 過負荷ルール（筋力UPの核）
+
+重量は各40kg上限。**8〜12回で限界がくる重さ**を狙う。重量が頭打ちなら、回数増・セット増・インターバル短縮・下ろし動作3秒（ネガティブ強調）・総ボリューム記録で前回超えを狙う。
+
+---
+
+## ■ コーチング判定ルール
+
+1. 体重は夜・週平均で判断。**一時的な数値（空腹/脱水/単日）で計画を変えない**
+2. 週平均が落ちなければ −100〜150kcal調整 / 落ちすぎ（週0.6kg超）は少し戻す
+3. ランがZ3以上に寄る日が続けばZ2へ戻す
+4. 有酸素は今の朝ラン量で十分。増やさない（筋肉温存）
+5. 筋トレは上半身・腕優先、**漸進性過負荷で前回超え**を狙う
+6. 出張等の特殊事情は一時対応に留め、**恒久的な計画は変えない**
+
+---
+
+## ■ ラン記録（参考・推移）
+
+| 日 | 距離 | ペース | 平均HR | 備考 |
+|---|---|---|---|---|
+| 6/14(日) | 8.01km | 5'39" | 157 | 後半5'13までビルドアップ |
+| 6/16(火) | 3.72km | 5'40" | 154 | 後半163までビルドアップ |
+| 6/17(水) | 3.74km | 5'38" | 152 | 心拍が落ち着き順応の兆候 |
+| 6/19(金) | 2.94km | 5'47" | 150 | 出張明け・燃料切れで距離短め |
+
+→ 距離・ペースほぼ一定で心拍が 157→154→152 と低下＝持久力向上のサイン。
+
+---
+
+## ■ 来週メモ：6/22(月)〜25(木) 出張ハード週（維持モード）
+
+**状況**：月〜木は連続出張（22仙台泊・23宮城・24愛知・25都内研修）。日中はMTG・移動で終日埋まり、**ラン不可・筋トレ不可**。月曜夜は飲み会。
+
+**前提（持ち物・食環境）**：
+- クレアチン・その他サプリ（マルチ/EPA/カロリミット/アミノ等）は**持参する**
+- **プロテインはコンビニ調達**（ザバス等のミルクプロテイン/ドリンクタイプ。ティゴラ等の持参はしない前提）
+- 食事は**基本すべて外食**
+
+**方針＝「攻める週」ではなく「守る週」。目標は減量進行ではなく筋肉を減らさない"維持"。それで100点。**
+
+**守るべきこと（優先順）**：
+1. **タンパク質150gをコンビニ＋外食で確保**。コンビニで高タンパク低脂質を選ぶ（サラダチキン/ゆで卵/鮭おにぎり/ザバスミルクプロテイン/ギリシャヨーグルト）。外食ではタンパク質の多いメイン（肉・魚定食）を選び、揚げ物・丼・麺単品に偏らせない
+2. **クレアチンは毎日継続**（持参分を小分けで。飲むだけで維持に効く・タイミング不問）
+3. **体重・数値で一喜一憂しない**。外食・移動・飲み会で一時的に増えるが脂肪ではない（塩分/水分/アルコール）。今週の数値は判定に使わない。判定は通常運転に戻ってからの夜・週平均で
+4. **動けたらボーナス**：ホテルで5分空けば自重（腕立てワイド/ナロー・腹筋クロス各1-2セット）。できなくても罪悪感ゼロ
+
+**月曜の飲み会**：焼き鳥・刺身・枝豆・冷奴でタンパク質を稼ぐ。〆のラーメン等は控える。アルコールは筋合成を一時抑制するので水を交互に。ただし付き合い優先で神経質になりすぎない。
+
+**コンビニ・プロテインの目安**：ザバスミルクプロテイン1本=P15g、サラダチキン=P20-25g、ゆで卵1個=P6g。これらを組み合わせて1日150gを目指す。固形が乱れる日はミルクプロテインを2本挟んで底上げ。
+
+**記録の運用**：ハード週は無理に毎日詳細記録しない。動けた日・特記事項のある日だけ追記。「今日これ食べた」と一言あれば都度タンパク質をチェックする。
+
+→ **来週は無理せず崩さないことが長期的な勝ち筋。8/31の72kg目標に維持週は全く問題なし。攻めるのは通常運転に戻ってから。**
+
+---
+
+## ■ 嗜好品・飲み物メモ
+
+- **アサヒ ゼロサイダー トリプル ファイバー＋α（0kcal・糖類0・脂質0／食物繊維入り炭酸）**：出張中によく飲んでいる嗜好品。水・お茶・炭酸水の延長として体重を増やさず満腹感・食べ過ぎ抑制に使えるため減量期と相性◎。**ただしアミノ酸（ロイシン等）配合をうたうが量はmg単位（ロイシン約13mg/500ml＝プロテイン1杯の約1/150）で、タンパク質源にはならない**。P150gのカウントには一切含めない。寝る前のタンパク質は別途プロテインで確保する。
+
+---
+
+## ■ 夜のサプリ検討メモ（手持ち以外も含む・将来の選択肢）
+
+**大前提**：サプリは"あれば少し有利"な程度。筋肉をつける本命は「トレーニング・タンパク質150g・睡眠」の3つ。塩島さんはこの3つを既に高いレベルで実行できているので、以下は"さらに上乗せしたい場合の選択肢"であり、なくても全く問題ない。
+
+**夜に足す価値があるもの（エビデンス順）**：
+1. **マグネシウム ← 夜の第一候補**：睡眠の質向上・筋肉の弛緩（こむら返り予防）・回復サポート。運動量の多い人は汗/尿で失いやすく不足しがち＝塩島さんは補う価値あり。グリシン酸マグネシウム（キレート）が吸収・胃への優しさで優秀。**注意：即効ブースターではない。「不足を正常に戻す」タイプで、足りている人が飲んでも劇的変化はない。"より動ける・脳がスッキリ"は"不足が補われた場合に本来の状態に戻る"形で起こり得る（睡眠改善→翌日スッキリは間接効果）**
+2. **カゼインプロテイン**：ゆっくり消化され睡眠中ずっとアミノ酸供給→就寝中の筋分解を抑え筋肉維持に有効。「夜のプロテイン」として理にかなう。ただし日中で150g確保できていれば必須ではない
+3. **グリシン**：深部体温を下げ睡眠の質を上げる。マグネシウムと役割が近いのでどちらか一方でよい
+4. **亜鉛（ZMA＝亜鉛＋Mg＋B6）**：テストステロン維持・睡眠・回復。男性向け定番だがエビデンスは上記より弱め・個人差あり
+
+**夜は不要・非推奨**：
+- BCAA/EAA（クアン・アミノバイタル）＝日中・運動前向き、夜に追加する意味は薄い
+- カフェイン入り燃焼系＝睡眠妨害で夜は厳禁
+- 大量のホエイ＝すでに足りているので夜の追加不要
+
+**結論**：新しく1つ買うなら**マグネシウム**（睡眠・回復という筋肉づくりの土台に効く）。2つ目は就寝前カゼイン。ただし期待値は"正常化"であって即効ブースターではない。新しいサプリを増やすより、今ある仕組み（トレ・150g・睡眠）を淡々と続ける方が結局一番効く。
+
+</script>
+
+<script>
+(function(){
+  var PIN="0000";
+  var gate=document.getElementById('gate'),app=document.getElementById('app');
+  var pin=document.getElementById('pin'),err=document.getElementById('gateErr');
+  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} render('week'); }
+  function renderPlansTab(){
+    // log.md の各日「### 予定...」ブロックを拾い、立てた日だけ新しい順にカード表示
+    var today=new Date(); today.setHours(0,0,0,0);
+    var wdn=['日','月','火','水','木','金','土'];
+    var days=srcLog.split(/\n##\s*▼\s*/).slice(1);
+    var cards=[];
+    days.forEach(function(b){
+      var head=b.split('\n')[0].trim();
+      var dm=head.match(/(\d{1,2})\/(\d{1,2})/); if(!dm) return;
+      // 「### 予定...」セクションを抽出（次の ### まで）
+      var m=b.match(/###\s*予定[^\n]*\n([\s\S]*?)(?=\n###\s|\n---|$)/);
+      if(!m) return;                       // 予定が無い日はカード化しない
+      var body=m[1].trim();
+      if(!body) return;
+      var mo=+dm[1], da=+dm[2];
+      var y=2026; var d=new Date(y,mo-1,da); d.setHours(0,0,0,0);
+      var diff=Math.round((d-today)/86400000);
+      var tag = diff===0?'<span class="pl-now">今日</span>' : diff>0?('<span class="pl-fut">'+diff+'日後</span>') : '<span class="pl-pst">済</span>';
+      var cls='evcard'+(diff===0?' is-today':diff<0?' is-done':'');
+      var title=mo+'/'+da+'（'+wdn[d.getDay()]+'）'+head.replace(/^\d{1,2}\/\d{1,2}[（(][^）)]*[）)]?/,'').trim();
+      cards.push({d:d, diff:diff, html:
+        '<div class="'+cls+'"><div class="evhd"><div class="evttl">'+title+'</div>'+tag+'</div>'+
+        '<div class="evbody plbody">'+marked.parse(body)+'</div></div>'});
+    });
+    cards.sort(function(a,b){ return b.d-a.d; });   // 新しい日が上
+    content.className='';
+    content.innerHTML='<div id="events">'+
+      (cards.length?cards.map(function(c){return c.html;}).join(''):'<div class="ev-empty">予定はまだありません。立てた日だけここに表示されます。</div>')+
+      '</div>';
+    toc.style.display='none'; window.scrollTo(0,0);
+  }
+
+  function renderEventsTab(){
+    // log から日付→体重 マップ
+    var wmap={};
+    srcLog.split(/\n##\s*▼\s*/).slice(1).forEach(function(b){
+      var head=b.split('\n')[0];
+      var dm=head.match(/(\d{1,2})\/(\d{1,2})/); if(!dm) return;
+      var key=(+dm[1])+'-'+(+dm[2]);
+      var ws=b.split(/###\s*体重/)[1];
+      if(ws){ var wm=ws.match(/(\d{2,3}(?:\.\d)?)\s*kg/); if(wm) wmap[key]=wm[1]; }
+    });
+    var blocks=srcEvents.split(/\n##\s+/).slice(1);
+    var today=new Date(); today.setHours(0,0,0,0);
+    var wdn=['日','月','火','水','木','金','土'];
+    var items=[];
+    blocks.forEach(function(b){
+      var title=b.split('\n')[0].trim();
+      var md=b.match(/date:\s*(\d{4})-(\d{2})-(\d{2})/); if(!md) return;
+      var d=new Date(+md[1], +md[2]-1, +md[3]); d.setHours(0,0,0,0);
+      var st=(b.match(/status:\s*(\w+)/)||[])[1]||'open';
+      var tm=(b.match(/time:\s*([0-9:]+)/)||[])[1]||'';
+      var days=Math.round((d-today)/86400000);
+      // 「### 日別プラン」で 上部本文 と 日別 を分離
+      var split=b.split(/###\s*日別プラン[^\n]*\n/);
+      var topRaw=split[0];
+      var topBody=topRaw.split('\n').slice(1).filter(function(l){ return !/^\s*<!--/.test(l); }).join('\n').trim();
+      var dayBlocks=[];
+      if(split[1]){
+        split[1].split(/####\s+/).slice(1).forEach(function(db){
+          var lines=db.split('\n');
+          var hm=lines[0].match(/(\d{4})-(\d{2})-(\d{2})/); if(!hm) return;
+          var dd=new Date(+hm[1],+hm[2]-1,+hm[3]); dd.setHours(0,0,0,0);
+          var label=lines[0].trim();
+          var dbody=lines.slice(1).join('\n').trim();
+          dayBlocks.push({date:dd, label:label, body:dbody});
+        });
+      }
+      items.push({title:title,date:d,status:st,time:tm,days:days,top:topBody,days_:dayBlocks});
+    });
+    items.sort(function(a,b){ var ao=a.status==='done'?1:0,bo=b.status==='done'?1:0; if(ao!==bo)return ao-bo; return a.date-b.date; });
+
+    var html2=items.map(function(x){
+      var cls='evcard', big, mdLabel=(x.date.getMonth()+1)+'/'+x.date.getDate(), wd=wdn[x.date.getDay()];
+      var done=(x.status==='done');
+      if(done){ big='<b>済</b>'; cls+=' is-done'; }
+      else if(x.days>0){ big='<b>'+x.days+'</b><span>日後</span>'; if(x.days<=3) cls+=' is-soon'; }
+      else if(x.days===0){ big='<b>本日</b>'; cls+=' is-today'; }
+      else { big='<b>終了</b>'; cls+=' is-done'; }
+      var when=mdLabel+'（'+wd+'）'+(x.time?(' '+x.time):'');
+      var sub = done?('目標日 '+when+'（完了）') : x.days>0?('目標日 '+when+' まで あと'+x.days+'日') : x.days===0?('目標日 '+when+'（今日）') : ('目標日 '+when+' は過ぎました');
+
+      // 日別の詳細カード
+      var planHtml='';
+      if(x.days_.length){
+        var rows=x.days_.map(function(p){
+          var pdays=Math.round((p.date-today)/86400000);
+          var rc='plday', mark='';
+          if(pdays<0) rc+=' is-past';
+          else if(pdays===0){ rc+=' is-today'; mark='<span class="pl-now">今日</span>'; }
+          if(p.date-x.date===0) rc+=' is-evt';
+          var key=(p.date.getMonth()+1)+'-'+p.date.getDate();
+          var w=wmap[key];
+          var wlabel = w?('<span class="pl-w">体重 '+w+'kg</span>'):'<span class="pl-w pl-no">体重 —</span>';
+          // ラベルの日付以降のタイトル部分（YYYY-MM-DDを除く見やすい形）
+          var ttl=p.label.replace(/^\d{4}-\d{2}-\d{2}\s*/,'');
+          if(!/\d+\/\d+/.test(ttl)) ttl=(p.date.getMonth()+1)+'/'+p.date.getDate()+'（'+wdn[p.date.getDay()]+'） '+ttl;
+          return '<div class="'+rc+'"><div class="pld-h"><span class="pld-t">'+ttl+'</span>'+mark+wlabel+'</div>'+
+                 '<div class="pld-b">'+marked.parse(p.body)+'</div></div>';
+        }).join('');
+        planHtml='<div class="evplan"><div class="pl-h">当日までの日別プラン（体重は記録が入った日に自動表示）</div>'+rows+'</div>';
+      }
+      return '<div class="'+cls+'"><div class="evhd"><div class="evbadge">'+big+'</div>'+
+             '<div><div class="evttl">'+x.title+'</div><div class="evwhen">'+sub+'</div></div></div>'+
+             (x.top?('<div class="evbody">'+marked.parse(x.top)+'</div>'):'')+planHtml+'</div>';
+    }).join('');
+    content.className=''; content.innerHTML='<div id="events">'+(html2||'<div class="ev-empty">イベントはありません</div>')+'</div>';
+    toc.style.display='none'; window.scrollTo(0,0);
+  }
+  function tryPin(){ if(pin.value===PIN){unlock();} else {err.textContent='PINが違います'; pin.value=''; pin.focus();} }
+  document.getElementById('gateBtn').onclick=tryPin;
+  pin.addEventListener('keyup',function(e){ if(pin.value.length===4 && pin.value===PIN){unlock();} if(e.key==='Enter') tryPin(); });
+  try{ if(localStorage.getItem('fv_ok')!=='1'){ pin.focus(); } }catch(e){ pin.focus(); }
+
+  var srcLog=document.getElementById('src-log').textContent;
+  var srcIns=document.getElementById('src-insights').textContent;
+  var srcReview=document.getElementById('src-review').textContent;
+  var srcEvents=document.getElementById('src-events').textContent;
+  var srcRef=document.getElementById('src-references').textContent;
+  var srcCore=document.getElementById('src-core').textContent;
+  var content=document.getElementById('content'), toc=document.getElementById('toc');
+  marked.setOptions({gfm:true, breaks:false});
+  var SECTIONS=['朝トレ','朝食','昼食','夕トレ','夕食','夜トレ'];
+  var WD=['月','火','水','木','金','土','日'];
+
+  function parseDays(md){
+    var re=/##\s*▼\s*([^\n]+)/g, m, marks=[];
+    while((m=re.exec(md))){ marks.push({label:m[1].trim(), idx:m.index}); }
+    var days=[];
+    for(var i=0;i<marks.length;i++){
+      var end=(i+1<marks.length)?marks[i+1].idx:md.length;
+      days.push({label:marks[i].label, text:md.slice(marks[i].idx,end)});
+    }
+    return days;
+  }
+  function blocksOf(t){
+    var map={},cur=null,buf=[];var ls=t.split('\n');
+    for(var i=0;i<ls.length;i++){var line=ls[i];var hm=line.match(/^###\s+(.+?)\s*$/);
+      if(hm){if(cur!==null)map[cur]=buf.join('\n').trim();cur=hm[1].trim();buf=[];}
+      else if(cur!==null){if(/^##\s/.test(line)||/^---\s*$/.test(line)){map[cur]=buf.join('\n').trim();cur=null;buf=[];}else buf.push(line);}}
+    if(cur!==null)map[cur]=buf.join('\n').trim();
+    return map;
+  }
+  function dateOf(label){
+    var m=label.match(/(\d{1,2})\/(\d{1,2})/); if(!m)return null;
+    var mo=+m[1],da=+m[2]; var now=new Date(); var y=now.getFullYear();
+    if(mo-(now.getMonth()+1)>6) y=y-1;
+    return new Date(y,mo-1,da);
+  }
+  function ymd(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+  function mondayOf(d){var x=new Date(d);var wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);x.setHours(0,0,0,0);return x;}
+  function weightVal(c){ if(!c)return null;
+    var m=c.match(/夜\s*\*?\*?\s*(\d{2,3}(?:\.\d)?)\s*kg/); if(m)return parseFloat(m[1]);
+    var m2=c.match(/(\d{2,3}(?:\.\d)?)\s*kg/); return m2?parseFloat(m2[1]):null; }
+
+  // 解析（1回）
+  var ENTRIES={}; // ymd -> {blocks, label, date}
+  parseDays(srcLog).forEach(function(d){
+    var dt=dateOf(d.label); if(!dt)return;
+    ENTRIES[ymd(dt)]={blocks:blocksOf(d.text), label:d.label, date:dt};
+  });
+  var REVIEWS={};
+  parseDays(srcReview).forEach(function(d){ var dt=dateOf(d.label); if(dt) REVIEWS[ymd(dt)]=d.text; });
+  function openReview(key){
+    var md=REVIEWS[key];
+    document.getElementById('rvBody').innerHTML = md ? marked.parse(md) : '<p style="color:#8a7d63;margin:18px 0">この日の総評はまだありません</p>';
+    document.getElementById('rvModal').classList.add('show');
+  }
+  function closeReview(){ document.getElementById('rvModal').classList.remove('show'); }
+  content.addEventListener('click', function(ev){ var t=ev.target.closest?ev.target.closest('[data-d]'):null; if(t){ openReview(t.getAttribute('data-d')); } });
+  document.getElementById('rvClose').addEventListener('click', closeReview);
+  document.getElementById('rvModal').addEventListener('click', function(ev){ if(ev.target.id==='rvModal') closeReview(); });
+  document.addEventListener('keydown', function(ev){ if(ev.key==='Escape') closeReview(); });
+
+  var curMon = mondayOf(new Date());
+
+  function cellHtml(content){
+    if(content===null||content===undefined||content==='') return '<span class="empty">·</span>';
+    var plain=content.replace(/[-*\s　・]/g,'');
+    if(plain.indexOf('なし')===0) return '<span class="none">－ なし</span>';
+    var tmp=document.createElement('div');
+    tmp.innerHTML=marked.parse(content);
+    function esc(t){var d=document.createElement('span');d.textContent=t;return d.innerHTML;}
+    Array.prototype.forEach.call(tmp.querySelectorAll('table'),function(tb){
+      var ul=document.createElement('ul');
+      Array.prototype.forEach.call(tb.querySelectorAll('tbody tr'),function(tr){
+        var c=Array.prototype.map.call(tr.querySelectorAll('td'),function(e){return e.textContent.trim();});
+        if(!c.length||c.join('')==='') return;
+        var name=c[0]||'', part=(c.length>=3?c[1]:''), rest=(c.length>=3?c.slice(2).join(' / '):c.slice(1).join(' / '));
+        var li=document.createElement('li');
+        li.innerHTML='<strong>'+esc(name)+'</strong>'+(part?'（'+esc(part)+'）':'')+(rest?'：'+esc(rest):'');
+        ul.appendChild(li);
+      });
+      if(ul.children.length){tb.parentNode.replaceChild(ul,tb);}else{tb.parentNode.removeChild(tb);}
+    });
+    var tagHtml='';
+    var lis=tmp.querySelectorAll('li');
+    for(var k=0;k<lis.length;k++){
+      var mt=lis[k].textContent.trim().match(/^時間\s+(.+)$/);
+      if(mt){ tagHtml='<span class="timetag">'+esc(mt[1].trim())+'</span>'; var ulp=lis[k].parentNode; ulp.removeChild(lis[k]); if(ulp&&ulp.tagName==='UL'&&!ulp.children.length){ulp.parentNode.removeChild(ulp);} break; }
+    }
+    return tagHtml+tmp.innerHTML;
+  }
+
+  function renderCalendar(){
+    var today=new Date(); var tkey=ymd(today);
+    var days=[]; for(var i=0;i<7;i++){var dt=new Date(curMon);dt.setDate(dt.getDate()+i);days.push(dt);}
+    // header
+    var head='<th class="sec">　</th>';
+    days.forEach(function(dt,i){
+      var cls=(ymd(dt)===tkey)?' today':'';
+      head+='<th class="dhead '+cls.trim()+'" data-d="'+ymd(dt)+'">'+WD[i]+'<br>'+(dt.getMonth()+1)+'/'+dt.getDate()+'</th>';
+    });
+    // body
+    var rows='';
+    SECTIONS.forEach(function(sec){
+      var tds='<td class="sec">'+sec+'</td>';
+      days.forEach(function(dt){
+        var e=ENTRIES[ymd(dt)]; var c=e?e.blocks[sec]:null;
+        var cls=(ymd(dt)===tkey)?' today':'';
+        tds+='<td class="'+cls.trim()+'"><div class="cell">'+cellHtml(c==null?'':c)+'</div></td>';
+      });
+      rows+='<tr>'+tds+'</tr>';
+    });
+    // 体重行
+    var wtds='<td class="sec">体重</td>';
+    days.forEach(function(dt){
+      var e=ENTRIES[ymd(dt)]; var w=e?weightVal(e.blocks['体重']):null;
+      var cls=(ymd(dt)===tkey)?' today':'';
+      wtds+='<td class="wt'+cls+'">'+(w!=null?w:'<span class="empty" style="font-weight:400">·</span>')+'</td>';
+    });
+    rows+='<tr>'+wtds+'</tr>';
+
+    var ws=new Date(curMon), we=new Date(curMon); we.setDate(we.getDate()+6);
+    var wl=(ws.getMonth()+1)+'/'+ws.getDate()+' 〜 '+(we.getMonth()+1)+'/'+we.getDate();
+
+    return ''+
+    '<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>'+
+    '<div class="calwrap"><table class="cal"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+
+  function renderMobile(){
+    var today=new Date(), tkey=ymd(today);
+    var ws=new Date(curMon), we=new Date(curMon); we.setDate(we.getDate()+6);
+    var wl=(ws.getMonth()+1)+'/'+ws.getDate()+' 〜 '+(we.getMonth()+1)+'/'+we.getDate();
+    var html='<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>';
+    html+='<div class="mlist">';
+    var any=false;
+    for(var i=6;i>=0;i--){
+      var dt=new Date(curMon); dt.setDate(dt.getDate()+i);
+      var e=ENTRIES[ymd(dt)]; if(!e) continue; any=true;
+      var isT=(ymd(dt)===tkey);
+      html+='<section'+(isT?' id="mtoday"':'')+' class="mday'+(isT?' tday':'')+'">';
+      html+='<div class="mdate dhead" data-d="'+ymd(dt)+'">'+(dt.getMonth()+1)+'/'+dt.getDate()+'（'+WD[i]+'）'+(isT?'<span class="tbadge">今日</span>':'')+'</div>';
+      SECTIONS.forEach(function(sec){
+        var c=e.blocks[sec];
+        html+='<div class="mrow"><div class="msec">'+sec+'</div><div class="cell mcell">'+cellHtml(c==null?'':c)+'</div></div>';
+      });
+      var w=weightVal(e.blocks['体重']);
+      html+='<div class="mrow"><div class="msec">体重</div><div class="cell mcell mwt">'+(w!=null?w+' kg':'<span class="empty">·</span>')+'</div></div>';
+      html+='</section>';
+    }
+    if(!any) html+='<p class="mempty">この週の記録はありません</p>';
+    html+='</div>';
+    return html;
+  }
+
+  function renderChartsPage(){
+    toc.style.display='none'; content.className='';
+    content.innerHTML=''+
+      '<div class="chartbox"><div class="chartttl">体重推移（夜kg・目標72kg）</div><div class="cc" style="height:300px"><canvas id="wchart"></canvas></div></div>'+
+      '<div class="chartbox"><div class="chartttl">週次トレ回数（朝・夕・夜トレの実施数）</div><div class="cc" style="height:260px"><canvas id="tchart"></canvas></div></div>';
+    drawCharts(); window.scrollTo(0,0);
+  }
+  var wChart=null, tChart=null;
+  function drawCharts(){
+    // 体重：日付昇順で体重がある日
+    var pts=Object.keys(ENTRIES).map(function(k){return ENTRIES[k];})
+      .filter(function(e){return weightVal(e.blocks['体重'])!=null;})
+      .sort(function(a,b){return a.date-b.date;});
+    var wl=pts.map(function(e){return (e.date.getMonth()+1)+'/'+e.date.getDate();});
+    var wv=pts.map(function(e){return weightVal(e.blocks['体重']);});
+    if(wChart)wChart.destroy();
+    var wc=document.getElementById('wchart');
+    if(wc){ wChart=new Chart(wc,{type:'line',
+      data:{labels:wl,datasets:[
+        {label:'夜体重',data:wv,borderColor:'#E88A0A',backgroundColor:'rgba(232,138,10,.12)',tension:.3,fill:true,pointRadius:4},
+        {label:'目標72kg',data:wl.map(function(){return 72;}),borderColor:'#3AABA8',borderDash:[6,4],pointRadius:0,fill:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#5a4a2e'}}},
+        scales:{y:{suggestedMin:70,suggestedMax:76,ticks:{color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
+                x:{ticks:{color:'#8a7d63',font:{size:11}},grid:{display:false}}}}});
+    }
+    // 週次トレ回数
+    var weekMap={};
+    Object.keys(ENTRIES).forEach(function(k){
+      var e=ENTRIES[k]; var mk=ymd(mondayOf(e.date));
+      var cnt=0; ['朝トレ','夕トレ','夜トレ'].forEach(function(s){
+        var c=e.blocks[s]; if(c){var p=c.replace(/[-*\s　・]/g,''); if(p!==''&&p.indexOf('なし')!==0) cnt++;}
+      });
+      weekMap[mk]=(weekMap[mk]||0)+cnt;
+    });
+    var weeks=Object.keys(weekMap).map(function(k){return {k:k,d:new Date(k),v:weekMap[k]};}).sort(function(a,b){return a.d-b.d;});
+    var tl=weeks.map(function(w){return (w.d.getMonth()+1)+'/'+w.d.getDate()+'週';});
+    var tv=weeks.map(function(w){return w.v;});
+    if(tChart)tChart.destroy();
+    var tc=document.getElementById('tchart');
+    if(tc){ tChart=new Chart(tc,{type:'bar',
+      data:{labels:tl,datasets:[{label:'トレ回数',data:tv,backgroundColor:'#3AABA8'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
+                x:{ticks:{color:'#8a7d63',font:{size:11}},grid:{display:false}}}}});
+    }
+  }
+
+  function bindNav(){
+    var p=document.getElementById('prevW'),n=document.getElementById('nextW');
+    if(p)p.onclick=function(){curMon.setDate(curMon.getDate()-7);renderWeek();};
+    if(n)n.onclick=function(){curMon.setDate(curMon.getDate()+7);renderWeek();};
+  }
+  function renderWeek(){
+    toc.style.display='none'; content.className='';
+    var mob=window.innerWidth<=640;
+    content.innerHTML=(mob?renderMobile():renderCalendar());
+    bindNav(); window.scrollTo(0,0);
+    if(mob){
+      var tc=document.getElementById('mtoday'), ml=content.querySelector('.mlist');
+      if(tc&&ml){ ml.scrollTop = tc.getBoundingClientRect().top - ml.getBoundingClientRect().top + ml.scrollTop; }
+    }
+  }
+  function renderMd(which){
+    var md=which==='log'?srcLog:srcIns; content.className='md'; content.innerHTML=marked.parse(md);
+    toc.innerHTML='';
+    if(which==='insights'){var hs=content.querySelectorAll('h3');
+      if(hs.length){var html='<div class="toc-h">目次（タップで移動）</div>';
+        hs.forEach(function(h,i){var id='q'+i;h.id=id;html+='<a href="#'+id+'">'+h.textContent+'</a>';});
+        toc.innerHTML=html;toc.style.display='block';}}
+    else toc.style.display='none';
+    window.scrollTo(0,0);
+  }
+  var KSUB='insights';
+  var KMETA={insights:{label:'学び', src:function(){return srcIns;}, toc:'h3', hint:'運用で確立した日付非依存のQ&A（insights.md）'},
+             references:{label:'ターザンメモ', src:function(){return srcRef;}, toc:'h2', hint:'食事・栄養リファレンス（references.md ／ R1〜R8）'},
+             core:{label:'ベース設定', src:function(){return srcCore;}, toc:'h2', hint:'基本情報・目標・サプリ・トレ設計の個人登録（core.md）'}};
+  function renderKnowledge(sub){
+    if(!KMETA[sub]) sub='insights';
+    KSUB=sub; content.className='md'; toc.style.display='none';
+    var nav='<div class="subnav">';
+    ['insights','references','core'].forEach(function(k){ nav+='<button data-k="'+k+'"'+(k===sub?' class="active"':'')+'>'+KMETA[k].label+'</button>'; });
+    nav+='</div>';
+    var openf = sub==='references' ? '<a class="openfull" href="references.html">図表つきフルページを開く →</a>' : '';
+    content.innerHTML = nav + '<div class="subhint">'+KMETA[sub].hint+'</div>' + openf + '<div class="kbody">'+marked.parse(KMETA[sub].src())+'</div>';
+    Array.prototype.forEach.call(content.querySelectorAll('.subnav button'),function(b){ b.onclick=function(){ renderKnowledge(b.getAttribute('data-k')); }; });
+    var hs=content.querySelectorAll('.kbody '+KMETA[sub].toc);
+    if(hs.length){ var h2='<div class="toc-h">目次（タップで移動）</div>';
+      Array.prototype.forEach.call(hs,function(h,i){ var id='k'+i; h.id=id; h2+='<a href="#'+id+'">'+h.textContent+'</a>'; });
+      toc.innerHTML=h2; toc.style.display='block'; }
+    window.scrollTo(0,0);
+  }
+  function render(which){ document.body.classList.toggle('calfix', which==='week'); if(which==='week')renderWeek(); else if(which==='charts')renderChartsPage(); else if(which==='events')renderEventsTab(); else if(which==='insights')renderKnowledge(KSUB); else renderMd(which); }
+  var _rzt; window.addEventListener('resize',function(){ clearTimeout(_rzt); _rzt=setTimeout(function(){ if(document.body.classList.contains('calfix')) renderWeek(); },200); });
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
+  });
+  document.getElementById('built').textContent='ページ生成: '+new Date('2026-06-21T14:48:29Z').toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' JST';
+  // 全初期化後に自動アンロック＆初回描画（初期化順バグ対策）
+  try{ if(localStorage.getItem('fv_ok')==='1'){ unlock(); } }catch(e){}
+})();
+</script>
+</body>
+</html>
