@@ -197,6 +197,16 @@
 > **【ナトリウム】** 味噌汁が抜けたため、本日のナトリウム源は**昼の食塩2.19g＋漬けダレ・シーズニングの塩分**のみ。**8月の屋外ランを含む3本立ての日としては少なめ。ポカリ500ml（Na約245mg）を飲む場合はここが埋まる。**
 - 未記録
 
+> **【2026-08-16 13:0x GitHub Actions 障害と修正｜Build index が23回連続 failure していた】**
+> **【発覚】** 本人がGitHubからの失敗通知（`Build index: All jobs have failed` / commit 38fdc20）を提示。
+> **【範囲】2026-08-15 23:13 UTC（＝8/16 08:13 JST）の 789c472 から 2358bd2 まで、本日のpush 23回すべてが failure。** 直近の成功は 8/15 15:07 UTC の 0392a49。**つまり本日エージェントが行った記録push は、すべてINDEX.mdに反映されていなかった。**
+> **【原因】** 失敗ステップは最終の「**Commit if changed**」＝`git push`。**本リポジトリの `default_workflow_permissions` が `read`** であり、build-index.yml は既定の GITHUB_TOKEN で push しようとしていたため拒否されていた。**sync-viewer.yml は `secrets.VIEWER_TOKEN`（PAT）で push しているため成功し続けており、2つのワークフローで認証方式が食い違っていた。**
+> **【切り分け】** リポジトリをローカルにcloneして `python3 tools/build_index.py` を実行 → **正常終了（exit 0・INDEX.md生成成功）。** スクリプト側に問題はなく、落ちているのは push だけであることを確認した。
+> **【修正】build-index.yml v1.0 → v1.1。** `actions/checkout@v4` に `token: ${{ secrets.VIEWER_TOKEN }}` を追加し、sync-viewer.yml と認証方式を揃えた（commit 12f0040）。
+> **【検証】** ワークフローファイルの変更だけでは build-index はトリガーされない（監視パスは log.md / review.md / archive/** / tools/build_index.py）ため、**INDEX.md に実差分を作って再実行し、push 経路まで通ることを確認した。** 結果＝**run 834cafb で Build index が success**、bot が `index: rebuild from log.md TAGS (834cafbb) [skip ci]`（23f15eb）を自動コミット。**23回連続の失敗は解消。**
+> **【現在のINDEX.mdの状態】** 警告1件＝**「08/16｜log.md に TAGS: 行がない」。これは本日をまだ締めていないためで、夜の締めでTAGS行を書けば消える。異常ではない。**
+> **【再発防止として記録しておくこと】** ①**push後にワークフローの成否を確認していなかった。** AGENTSの「GitHub post-upload verification（git log確認・公開URL確認）」は運用していたが、**Actions の conclusion までは見ていなかった。** ②**同一リポジトリ内で認証方式が2種類あることが原因**であり、今後ワークフローを追加する場合も `VIEWER_TOKEN` に揃える。
+
 ### 夜トレ
 - 未記録
 
@@ -3173,8 +3183,6 @@ TAGS: date=2026-07-26 | push=ワイド200,ナロー200,パイクプレス100 | p
 
 ---
 
-
-<!-- ci-verify 2026-08-16 -->
 ## ▼ 07/21（火）カロリー実測週間初日（〜7/27）／朝ラン実施／甲府会議→夜名古屋ウェルビー今池泊（サウナ）／目標P150g
 
 ### 朝トレ
