@@ -183,6 +183,20 @@
 > **【★夜が飲みになった場合】** 夕と就寝前が席に置き換わる。**席に入る前の到達点は P79.3／1,038.5kcal／糖質104.1。** 床までP70.7で、つまみ（焼き鳥・刺身・枝豆・冷奴）で届く水準（insights Q1-2）。
 > **【★水分＝本日は床の上側（2.5L）で取る】** 昼だけで食塩9.2g。**9/5は1.0L以下だった。**
 
+### 開発｜Apple Health 自動取り込みの開通（2026-09-06 16:2x 完了）
+
+- **【★★完了｜Mac Studio の launchd で1時間ごとの自動同期が開通。ZIP の手渡しは不要になった】** 塩島さんがディスパッチ経由で Claude Code に依頼し、当チャットは依頼文の作成と判断の承認を担当。**AGENTS.md の「未処理の宿題｜Apple Health は毎回 ZIP を手渡し」はこれで消える。**
+
+**設置物**＝ラッパー `~/bin/fitness-log-sync.sh`／plist `~/Library/LaunchAgents/com.shiojima.fitness-log.applehealth.plist`（StartInterval 3600 ＋ RunAtLoad）／ログ `~/Library/Logs/fitness-log-sync.log`／clone `~/fitness-log`。リモート main = **a73c8db**。
+
+> **【★★実装で判明した最大の誤り＝日次データが今まで丸ごと取り込まれていなかった】** `sync_apple_health.py` の日次判定は `HealthAutoExport-` で始まる名前だけを見ていたが、**fitness-log-daily の実際の出力は `HealthMetrics-YYYY-WW.csv`。分類対象外として無視されていた。** 修正後の実データ検証で**日次=4ファイル／新規9・更新6**、体重・体脂肪率・VO2Max・睡眠が正しく `data/apple-daily.csv` に入るようになった。**8/30の連携開通以降、入っていたのはワークアウトだけだった。**
+> **【★実際の出力先は `iCloud~com~ifunography~HealthExport/Documents`】** **`com~apple~CloudDocs/AutoExport` は存在しない。** Health Auto Export はアプリ自身のコンテナに書く。**AGENTS.md にこれまで書かれていたパスが誤っていた（今回訂正済み）。**
+> **【★手入力の体重は書き換わらないことを diff で確認した】** 初回だけ `.bak` を取り、上書き6行を列単位で検証＝**体重・体脂肪率の上書きは0件**（HealthMetrics 側にこれらの列の値が空のため）。書き換わったのは Apple の生指標のみ（歩数 5848→10099、消費 1991→3074kJ 等＝部分値→週次の完全値）。
+> **【★二重取り込みは構造的に起きない】** **build_index.py は log.md・review.md・archive のみを読み、`apple-daily.csv` を一切参照していない。** INDEX.md の体重系列と移動平均の根拠は**手入力の TAGS 行だけ**。
+> **【★data/** の push では Actions が発火しない＝意図した設計】** build-index.yml は log.md・review.md・archive・build_index.py、sync-viewer.yml は md のみがトリガー。**Apple の生データは GitHub 上で `data/apple-daily.csv` と `data/apple-workouts.csv` を直接見る。**
+> **【★sync-viewer.yml に `data/**` を足さない判断＝Mac Studio 側の提案を承認】** 理由は**トリガーの問題ではなくジョブ本体が CSV を viewer に配っていないから**。sync-viewer は6つの md だけを viewer リポジトリへコピーし、viewer の index.html は FV_DATA の md 固定を読む作り。**足すと毎時起動して md 差分ゼロの空振りを繰り返すだけ。** viewer で Apple 指標を見たい場合は「CSV から `apple.md` を生成するビルドを足す」のが筋＝**別タスクとして残す（本日はやらない）。**
+> **【★残り1点｜17:21 の tick 後に自動コミットが積まれるかの確認】** 現時点は未取り込みの新規差分がゼロのため空コミットを積まない設計で待機中。**push 経路自体は本日 2586726 で実証済み。**
+
 ## ▼ 09/05（土）**12:00 準備ソア合流（シオ・カズ）／13:00–19:00 山梨県立科学館イベント＆山梨学院イベント（シオ・カズ）**／**トレ＝07:30 朝ラン Z2 4km前後（トレーニングカレンダー）**／**朝系列 73.0kg（n=33・7点移動平均 73.39kg・前回比 −0.13）**
 
 > **【取得ファイル 2026-09-05 07:4x】** clone で全文取得＝**AGENTS.md／INDEX.md／core.md（1〜1105行すべて）**。部分取得＝log.md（09/01・09/04ブロックと冒頭）／events.md（9/5・9/6該当部）。**core.md は全文、log.md と events.md は該当箇所のみ＝部分読みであることを明記する。**
