@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<!-- v3.85（2026-09-10）: 現在の運用に合わせて改修＝週カレンダーに栄養行とTANITA残日数／推移グラフに週次レビュー・栄養グラフ／予定・計画タブに週次プランと現行設計／記録タブを日付順に。週カレンダーの見出し振り分け／体重は TAGS の wt_am・wt_pm／朝系列＋7点移動平均／トレ集計は TAGS／データ同期時刻を data/.last-sync から表示／起動時は今週 -->
 <!-- 【重要】v3.84〜 本ファイルはデータ分離方式（data/*.md を実行時取得・埋め込みなし）。mdの再埋め込みでの更新は禁止。更新手順は fitness-log/AGENTS.md「データ分離同期」を参照 -->
-<title>Fitness Viewer v3.84</title>
+<title>Fitness Viewer v3.85</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -117,7 +118,7 @@
   table.cal thead th.sec{z-index:3}
   table.cal th.today,table.cal td.today{background:var(--today)}
   table.cal thead th.today{box-shadow:inset 0 -3px 0 var(--accent2)}
-  table.cal td:not(.sec):not(.wt){height:calc((100vh - 270px)/6); height:calc((100svh - 270px)/6); min-height:56px; padding:0}
+  table.cal td:not(.sec):not(.wt){height:calc((100vh - 322px)/6); height:calc((100svh - 322px)/6); min-height:56px; padding:0}
   .cell{font-size:13px; line-height:1.55; padding:8px 9px; height:100%; box-sizing:border-box; overflow:auto}
   .cell blockquote{margin:6px 0 0; padding:5px 9px; border-left:3px solid #c98a2e; background:#fbf3e6; border-radius:0 7px 7px 0; font-size:11.5px; line-height:1.5; color:#5a4a2e}
   .cell blockquote p{margin:2px 0}
@@ -127,6 +128,47 @@
   .cell strong{color:#1f2a30}
   .cell .empty{color:#c9b896}
   .cell .none{color:var(--none); font-weight:700}
+  .cell .sublab{display:inline-block; font-size:10px; line-height:1.4; font-weight:800; color:#7a4a08; background:var(--thead); border:1px solid var(--line); border-radius:6px; padding:0 6px; margin:6px 0 2px}
+  .cell .sublab:first-child{margin-top:0}
+  .cell h4{font-size:12px; margin:6px 0 2px; color:#5a4a2e}
+  .cell p{margin:3px 0}
+  td.wt small{display:block; font-size:11px; font-weight:700; color:var(--muted)}
+  .weeknav button.tw{width:auto; padding:0 10px; font-size:12px; font-weight:800; color:var(--accent); border-color:var(--accent)}
+  .wnote{font-size:11px; color:var(--muted); margin:6px 2px 0}
+  .weeknav{position:relative}
+  .wchips{position:absolute; right:0; top:50%; transform:translateY(-50%); display:flex; gap:6px}
+  .chip{font-size:11.5px; font-weight:800; color:#5a4a2e; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px 10px; white-space:nowrap}
+  .chip.ctan{color:#fff; background:var(--accent2); border-color:var(--accent2)}
+  td.wt.nut{font-size:12px; line-height:1.5; font-weight:700; padding:4px 6px}
+  .nok{color:var(--ok)} .nng{color:#b5680a} .ncap{display:inline-block; margin-left:4px; font-size:9.5px; font-weight:700; color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:0 4px; vertical-align:1px}
+  .rvwrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  table.rvtab td:nth-child(2){min-width:170px}
+  table.rvtab tbody th,table.rvtab thead th:first-child{position:sticky; left:0; z-index:1}
+  @media(max-width:640px){ table.rvtab{font-size:11.5px; min-width:600px} table.rvtab td b{font-size:13px} .rdt{font-size:10.5px} }
+  table.rvtab{border-collapse:collapse; width:100%; font-size:12.5px; min-width:640px}
+  table.rvtab th,table.rvtab td{border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top}
+  table.rvtab thead th{background:var(--thead); color:#7a4a08; font-size:12px; line-height:1.35}
+  table.rvtab thead small{font-weight:400; color:var(--muted)}
+  table.rvtab tbody th{background:var(--bg2); white-space:nowrap; font-size:12px}
+  table.rvtab tbody th small{display:block; font-weight:400; color:var(--muted)}
+  table.rvtab td b{font-size:14px}
+  table.rvtab td.rok b{color:var(--ok)} table.rvtab td.rng b{color:#b5680a}
+  table.rvtab tr.rcur td,table.rvtab tr.rcur th{background:var(--today)}
+  .rdt{font-size:11px; color:#5a4a2e; line-height:1.45; margin-top:2px}
+  .rnote{display:block; color:var(--muted); font-size:10.5px}
+  .evbody table{border-collapse:collapse; font-size:12.5px; margin:10px 0; display:block; overflow-x:auto}
+  .evbody th,.evbody td{border:1px solid var(--line); padding:5px 8px; text-align:left; vertical-align:top}
+  .evbody th{background:var(--thead); color:#b5680a}
+  .evbody h3,.evbody h4{font-size:14px; margin:14px 0 6px; color:#1f7f7d}
+  .evbody blockquote{margin:8px 0; padding:6px 12px; background:var(--bg2); border-left:3px solid var(--accent2); color:#5a4a2e; font-size:12.5px; border-radius:0 8px 8px 0}
+  details.evfold{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 18px}
+  details.evfold>summary{cursor:pointer; font-weight:800; font-size:14.5px; color:#5a4a2e}
+  details.evfold[open]>summary{margin-bottom:8px}
+  .evsec{font-size:12px; color:var(--accent2); font-weight:800; margin:8px 2px -4px}
+  table.tgt{border-collapse:collapse; font-size:13.5px; margin:8px 0 2px}
+  table.tgt th,table.tgt td{border:1px solid var(--line); padding:6px 12px; text-align:right}
+  table.tgt th:first-child,table.tgt td:first-child{text-align:left}
+  table.tgt thead th{background:var(--thead); color:#7a4a08; font-size:12px}
   td.wt{font-size:14px; font-weight:800; text-align:center; vertical-align:middle; color:#1f2a30; padding:6px; height:42px}
   .cc{position:relative; height:220px}
   .cc canvas{width:100%!important; height:100%!important}
@@ -153,7 +195,8 @@
     body.calfix header.top{flex:0 0 auto}
     body.calfix main{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:8px}
     body.calfix #content{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden}
-    body.calfix .weeknav{flex:0 0 auto; margin-bottom:6px}
+    body.calfix .weeknav{flex:0 0 auto; margin-bottom:6px; flex-wrap:wrap; row-gap:6px}
+    .wchips{position:static; transform:none; width:100%; justify-content:center; flex-wrap:wrap}
     body.calfix .updated{display:none}
     .mlist{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-right:2px}
     .mday{margin-bottom:14px; border:1px solid var(--line); border-radius:12px; background:var(--card)}
@@ -207,18 +250,18 @@
   <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
   <button id="gateBtn">ひらく</button>
   <p id="gateErr"></p>
-  <p style="opacity:.45">v3.84</p>
+  <p style="opacity:.45">v3.85</p>
 </div>
 
 <div id="app">
   <header class="top">
-    <div class="ttl"><b>Fitness Viewer</b><span>v3.84</span></div>
+    <div class="ttl"><b>Fitness Viewer</b><span>v3.85</span></div>
     <div class="tabs">
       <button class="tab active" data-t="week">週カレンダー</button>
       <button class="tab" data-t="charts">推移グラフ</button>
       <button class="tab" data-t="log">記録</button>
       <button class="tab" data-t="insights">知の財産</button>
-      <button class="tab" data-t="events">イベント</button>
+      <button class="tab" data-t="events">予定・計画</button>
     </div>
   </header>
   <main>
@@ -270,7 +313,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
   var PIN="0000";
   var gate=document.getElementById('gate'),app=document.getElementById('app');
   var pin=document.getElementById('pin'),err=document.getElementById('gateErr');
-  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} render('week'); }
+  function unlock(){ gate.style.display='none'; app.style.display='block'; try{localStorage.setItem('fv_ok','1')}catch(e){} curMon=mondayOf(new Date()); render('week'); }
   function renderPlansTab(){
     // log.md の各日「### 予定...」ブロックを拾い、立てた日だけ新しい順にカード表示
     var today=new Date(); today.setHours(0,0,0,0);
@@ -303,16 +346,43 @@ data/core.md を取得できませんでした。通信環境を確認して再�
     toc.style.display='none'; window.scrollTo(0,0);
   }
 
+  function planSections(){
+    var P=planInfo(), today=new Date(), wdn=['日','月','火','水','木','金','土'], h=''; today.setHours(0,0,0,0);
+    function md(d){ return (d.getMonth()+1)+'/'+d.getDate()+'（'+wdn[d.getDay()]+'）'; }
+    if(P.tanita){
+      var n=daysTo(P.tanita), ma=maLatest();
+      var big=n>0?('<b>'+n+'</b><span>日後</span>'):n===0?'<b>本日</b>':'<b>済</b>';
+      var t='';
+      if(P.last||P.target){
+        t='<table class="tgt"><thead><tr><th></th><th>前回 '+(P.last?(P.last.date.getMonth()+1)+'/'+P.last.date.getDate():'')+'</th><th>目標</th><th>目標との差</th></tr></thead><tbody>';
+        var row=function(lab,a,b,u){ var d=(a!=null&&b!=null)?Math.round((b-a)*10)/10:null; return '<tr><td>'+lab+'</td><td>'+(a!=null?a.toFixed(1)+u:'—')+'</td><td>'+(b!=null?b.toFixed(1)+u:'—')+'</td><td>'+(d!=null?((d>0?'+':d<0?'−':'±')+Math.abs(d).toFixed(1)+(u==='%'?'pt':u)):'—')+'</td></tr>'; };
+        t+=row('体脂肪率',P.last&&P.last.bf,P.target&&P.target.bf,'%')+row('筋肉量',P.last&&P.last.mm,P.target&&P.target.mm,'kg');
+        t+='<tr><td>朝系列 7点移動平均</td><td colspan="3" style="text-align:left">'+(ma?ma.v.toFixed(2)+'kg（'+(ma.date.getMonth()+1)+'/'+ma.date.getDate()+'・n='+ma.n+'）':'—')+'　<small style="color:var(--muted)">体重には目標を置かない</small></td></tr>';
+        t+='</tbody></table>';
+      }
+      h+='<div class="evcard'+(n<=3&&n>=0?' is-soon':'')+'"><div class="evhd"><div class="evbadge">'+big+'</div><div><div class="evttl">TANITA 測定</div><div class="evwhen">'+md(P.tanita)+(n>0?' まで あと'+n+'日':'')+'（core.md）</div></div></div><div class="evbody">'+t+'</div></div>';
+    }
+    if(P.weekly.length){
+      var cur=null; P.weekly.forEach(function(w){ if(!cur && today>=w.from && today<=w.to) cur=w; });
+      var latest=P.weekly[0];
+      var show=cur||latest;
+      h+='<div class="evcard" style="border-left-color:var(--accent)"><div class="evhd"><div><div class="evttl">'+(cur?'今週の週次プラン':'直近の週次プラン')+'</div><div class="evwhen">'+md(show.from)+'〜'+md(show.to)+'（events.md）</div></div></div><div class="evbody">'+marked.parse(show.body)+'</div></div>';
+      if(latest!==show && latest.from>show.from) h+='<details class="evfold" open><summary>来週の週次プラン '+md(latest.from)+'〜'+md(latest.to)+'</summary><div class="evbody">'+marked.parse(latest.body)+'</div></details>';
+      var older=P.weekly.filter(function(w){ return w!==show && w!==latest; });
+      if(older.length) h+='<details class="evfold"><summary>過去の週次プラン（'+older.length+'件）</summary><div class="evbody">'+older.map(function(w){return '<h3>'+md(w.from)+'〜'+md(w.to)+'</h3>'+marked.parse(w.body);}).join('')+'</div></details>';
+    }
+    if(P.design){
+      var loose=Object.keys(P.loose).map(function(k){ var p=k.split('-'); return +p[1]+'/'+(+p[2]); });
+      h+='<details class="evfold"><summary>現行の設計｜'+escHtml(P.design.head.replace(/\*\*/g,'').replace(/^[★\s]+/,''))+'</summary>'+
+        (loose.length?'<div class="wnote" style="margin:0 0 6px">崩れる前提の日（kcal上限なし）：'+loose.join('・')+'</div>':'')+
+        '<div class="evbody">'+marked.parse(P.design.body)+'</div></details>';
+    }
+    return h;
+  }
   function renderEventsTab(){
-    // log から日付→体重 マップ
+    // 日付→体重（朝系列を優先・無ければ夜）
     var wmap={};
-    srcLog.split(/\n##\s*▼\s*/).slice(1).forEach(function(b){
-      var head=b.split('\n')[0];
-      var dm=head.match(/(\d{1,2})\/(\d{1,2})/); if(!dm) return;
-      var key=(+dm[1])+'-'+(+dm[2]);
-      var ws=b.split(/###\s*体重/)[1];
-      if(ws){ var wm=ws.match(/(\d{2,3}(?:\.\d)?)\s*kg/); if(wm) wmap[key]=wm[1]; }
-    });
+    Object.keys(ENTRIES).forEach(function(k){ var e=ENTRIES[k], w=e.wt.am!=null?e.wt.am:e.wt.pm; if(w!=null) wmap[(e.date.getMonth()+1)+'-'+e.date.getDate()]=w.toFixed(1); });
     var blocks=srcEvents.split(/\n##\s+/).slice(1);
     var today=new Date(); today.setHours(0,0,0,0);
     var wdn=['日','月','火','水','木','金','土'];
@@ -343,7 +413,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
     });
     items.sort(function(a,b){ var ao=a.status==='done'?1:0,bo=b.status==='done'?1:0; if(ao!==bo)return ao-bo; return a.date-b.date; });
 
-    var html2=items.map(function(x){
+    function evCard(x){
       var cls='evcard', big, mdLabel=(x.date.getMonth()+1)+'/'+x.date.getDate(), wd=wdn[x.date.getDay()];
       var done=(x.status==='done');
       if(done){ big='<b>済</b>'; cls+=' is-done'; }
@@ -376,7 +446,12 @@ data/core.md を取得できませんでした。通信環境を確認して再�
       return '<div class="'+cls+'"><div class="evhd"><div class="evbadge">'+big+'</div>'+
              '<div><div class="evttl">'+x.title+'</div><div class="evwhen">'+sub+'</div></div></div>'+
              (x.top?('<div class="evbody">'+marked.parse(x.top)+'</div>'):'')+planHtml+'</div>';
-    }).join('');
+    }
+    var up=items.filter(function(x){ return x.status!=='done' && x.days>=0; });
+    var past=items.filter(function(x){ return !(x.status!=='done' && x.days>=0); }).sort(function(a,b){return b.date-a.date;});
+    var html2=planSections()+
+      (up.length?'<div class="evsec">日付つきのイベント</div>'+up.map(evCard).join(''):'')+
+      (past.length?'<details class="evfold"><summary>過去のイベント（'+past.length+'件）</summary><div id="events">'+past.map(evCard).join('')+'</div></details>':'');
     content.className=''; content.innerHTML='<div id="events">'+(html2||'<div class="ev-empty">イベントはありません</div>')+'</div>';
     toc.style.display='none'; window.scrollTo(0,0);
   }
@@ -393,9 +468,10 @@ data/core.md を取得できませんでした。通信環境を確認して再�
         var fvX=new XMLHttpRequest();
         fvX.open('GET',FV_DATA[fvId]+'?t='+Date.now(),false);
         fvX.send(null);
-        if(fvX.status===200&&fvX.responseText){document.getElementById(fvId).textContent=fvX.responseText;}
+        if(fvX.status===200&&fvX.responseText){document.getElementById(fvId).textContent=fvX.responseText; if(fvId==='src-log'){ window.__fvLogLM=fvX.getResponseHeader('Last-Modified'); }}
       }catch(fvE){}
     }
+    try{ var fvS=new XMLHttpRequest(); fvS.open('GET','data/.last-sync?t='+Date.now(),false); fvS.send(null); if(fvS.status===200) window.__fvLastSync=fvS.responseText.trim(); }catch(fvE2){}
   })();
   var srcLog=document.getElementById('src-log').textContent;
   var srcIns=document.getElementById('src-insights').textContent;
@@ -407,6 +483,245 @@ data/core.md を取得できませんでした。通信環境を確認して再�
   marked.setOptions({gfm:true, breaks:false});
   var SECTIONS=['朝トレ','朝食','昼食','夕トレ','夕食','夜トレ'];
   var WD=['月','火','水','木','金','土','日'];
+
+  /* fv-parse:start ── v3.85 log.md 解析（見出しの書式変化に追従・TAGS 優先） */
+  function sectionsOf(t){
+    var out=[],cur=null,buf=[],ls=t.split('\n');
+    function flush(){ if(cur!==null) out.push({h:cur, body:buf.join('\n').trim()}); cur=null; buf=[]; }
+    for(var i=0;i<ls.length;i++){ var line=ls[i];
+      var hm=line.match(/^###\s+(.+?)\s*$/);
+      if(hm){ flush(); cur=hm[1].trim(); continue; }
+      if(cur===null) continue;
+      if(/^##\s/.test(line)||/^---\s*$/.test(line)){ flush(); continue; }
+      if(/^TAGS:/.test(line)) continue;
+      buf.push(line);
+    }
+    flush(); return out;
+  }
+  function tagsOf(t){
+    var m=t.match(/^TAGS:(.*)$/m); if(!m) return null;
+    var o={}; m[1].split('|').forEach(function(kv){ var i=kv.indexOf('='); if(i>0) o[kv.slice(0,i).trim()]=kv.slice(i+1).trim(); });
+    return o;
+  }
+  function tagOn(v){ return v!=null && v!=='' && v!=='0' && v!=='-'; }
+  function numOrNull(v){ var x=parseFloat(v); return (v!=null && /^\d{2,3}(\.\d+)?$/.test(String(v).trim()) && isFinite(x))?x:null; }
+  // 体重：TAGS の wt_am / wt_pm を正とする。TAGS 導入前（〜7/25）だけ本文から読む
+  function weightsFrom(tags, secs){
+    if(tags && ('wt_am' in tags || 'wt_pm' in tags)) return {am:numOrNull(tags.wt_am), pm:numOrNull(tags.wt_pm)};
+    var body=null; secs.forEach(function(s){ if(body===null && /^体重/.test(s.h)) body=s.body; });
+    var r={am:null, pm:null}; if(!body) return r;
+    body.split('\n').forEach(function(line){
+      if(!/^\s*-/.test(line)) return;
+      var m=line.match(/(^|[^\d.])(\d{2,3}(?:\.\d+)?)\s*kg/); if(!m) return;   // 「74.94kg」の「94」を拾わない
+      var v=parseFloat(m[2]);
+      if(/^\s*-\s*\**\s*朝[・\s：:系]/.test(line)){ if(r.am===null) r.am=v; return; }
+      var after=line.slice(line.indexOf(m[0])+m[0].length);
+      if(/^\s*\**\s*（朝/.test(after)) return;             // 朝系列の運用開始（7/17）前の朝の値は系列に入れない
+      if(r.pm===null) r.pm=v;
+    });
+    return r;
+  }
+  var FOOD_ROWS=['朝食','昼食','夕食'], TR_ROWS=['朝トレ','夕トレ','夜トレ'];
+  function hourOf(s){ var re=/(\d{1,2})[:：](?:[0-5]\d|\d?x|\d)/g, m; while((m=re.exec(s))){ var h=+m[1]; if(h<=23) return h; } return null; }
+  function hintHour(h){ if(/午前|朝/.test(h)) return 8; if(/午後|昼|夕方/.test(h)) return 14; if(/夜|就寝/.test(h)) return 21; return null; }
+  function slot(kind, heading, body, dflt){
+    var hr=hourOf(heading); if(hr===null) hr=hintHour(heading); if(hr===null) hr=hourOf(body||'');
+    if(hr===null) return dflt;
+    if(kind==='food') return (hr>=4&&hr<=10)?'朝食':(hr>=11&&hr<=15)?'昼食':'夕食';
+    return (hr>=4&&hr<=10)?'朝トレ':(hr>=11&&hr<=17)?'夕トレ':'夜トレ';
+  }
+  var SKIP_RE=/提案|プラン|予定|着地|残り|再設計|再計算|締め|確定値|合計|集計|設計|分岐|条件変更|誤り|開発|Apple ?Health|実測|活動量|消費|所感|効果|まとめ|用途|計測環境|朝の3問|体調|飲み物|水分|飲水|未確定|手持ち|選択|追記|気づき|戦略|収支|TANITA|構成|検討|置き場所|変更|未摂取|流れ|再修正|確定 ?v|順番|メニュー|方針|8\/27/;
+  // 見出し → 週カレンダーの行（null＝載せない）
+  function rowOf(rawH, body){
+    var h=rawH.replace(/\*\*/g,'').replace(/^[★■\s]+/,'').trim();
+    if(/^体重/.test(h)) return null;
+    if(/^朝食/.test(h)) return /選択/.test(h)?null:'朝食';
+    if(/^昼食/.test(h)) return /選択/.test(h)?null:'昼食';
+    if(/^(夕食|夜食)/.test(h)) return /選択/.test(h)?null:'夕食';
+    if(/^就寝前/.test(h)) return '夕食';
+    if(/^(夜トレ後|トレ後)/.test(h)) return slot('food',h.replace(/^夜トレ後/,'夜'),body,'夕食');
+    if(/^間食|^\d{1,2}[:：]\d{2}\s*の枠/.test(h)) return slot('food',h,body,'昼食');
+    if(/^(朝トレ|午前トレ)/.test(h)) return '朝トレ';
+    if(/^(夕トレ|昼トレ|午後トレ)/.test(h)) return '夕トレ';
+    if(/^夜トレ/.test(h)) return '夜トレ';
+    if(SKIP_RE.test(h)) return null;
+    var fm=h.match(/^実績｜.*?(朝食|昼食|夕食)/); if(fm) return fm[1];
+    if(/^(トレ|トレーニング|本日のトレ|セッション実績|ジム総括|家トレ|自重トレ|ホテル着後|実績｜)/.test(h)) return slot('tr',h,body,'夜トレ');
+    return null;
+  }
+  // 見出しが無い日の食事（例 8/26）：実績表の「枠」列から振り分ける
+  function foodFromTables(secs){
+    var got={};
+    secs.forEach(function(s){
+      var h=s.h.replace(/\*\*/g,'');
+      if(!/実績|記録|1日合計（確定）|摂取合計|締め|確定値/.test(h) || /提案|見込み/.test(h)) return;
+      var lines=s.body.split('\n'), hdr=null;
+      for(var i=0;i<lines.length;i++){
+        var L=lines[i]; if(!/^\s*\|/.test(L)){ hdr=null; continue; }
+        var cells=L.replace(/^\s*\||\|\s*$/g,'').split('|').map(function(c){return c.replace(/\*\*/g,'').trim();});
+        if(/^:?-{2,}/.test(cells[0])) continue;
+        if(hdr===null){ hdr=cells; continue; }
+        var ki=hdr.indexOf('枠'); if(ki<0) ki=hdr.indexOf('区分'); var ti=hdr.indexOf('時刻');
+        var k=ki>=0?(cells[ki]||''):'', row=null;
+        if(ki>=0){ if(/^朝/.test(k)) row='朝食'; else if(/^昼/.test(k)) row='昼食'; else if(/^(夕|夜|就寝|トレ後)/.test(k)) row='夕食'; else if(/^間食/.test(k)) row=slot('food',k,'','昼食'); }
+        else if(ti>=0){ var hr=hourOf(cells[ti]||''); if(hr!==null) row=(hr>=4&&hr<=10)?'朝食':(hr>=11&&hr<=15)?'昼食':'夕食'; }
+        if(!row) continue;
+        var txt=(ki>=0?k.replace(/^(朝|昼|夕|夜|就寝前|間食)\s*/,''):(cells[ti]||'')), detail=[];
+        hdr.forEach(function(hn,j){ if(j===ki||j===ti||!cells[j]) return;
+          if(/^(内容|品目|品)$/.test(hn)) txt=(txt?txt+' ':'')+cells[j];
+          else if(/^(P|kcal|糖質|炭水化物)$/.test(hn)) detail.push(hn+' '+cells[j]); });
+        (got[row]=got[row]||[]).push('- '+(txt||k)+(detail.length?'（'+detail.join('／')+'）':''));
+      }
+    });
+    return got;
+  }
+  function escHtml(t){ return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function rowsOf(secs, tags){
+    var acc={}; SECTIONS.forEach(function(r){ acc[r]=[]; });
+    var trained=tags?(['push','pull','legs','arms','shoulder','core','cardio'].some(function(k){return tagOn(tags[k]);}) || (+tags.vol>0)):null;
+    secs.forEach(function(s){
+      var r=rowOf(s.h, s.body); if(!r || !s.body) return;
+      // TAGS でトレなしの日は、時刻で振り分ける汎用の「トレ」見出しを置かず3枠とも「なし」にする
+      if(trained===false && TR_ROWS.indexOf(r)>=0 && !/^(朝トレ|午前トレ|夕トレ|昼トレ|午後トレ|夜トレ)/.test(s.h.replace(/\*\*/g,'').replace(/^[★■\s]+/,''))) return;
+      var h=s.h.replace(/\*\*/g,'').trim();
+      acc[r].push({label:(h===r?'':h), body:s.body});
+    });
+    var tb=foodFromTables(secs);
+    FOOD_ROWS.forEach(function(r){ if(!acc[r].length && tb[r]) acc[r].push({label:'1日の実績表より', body:tb[r].join('\n')}); });
+    var out={};
+    SECTIONS.forEach(function(r){
+      var list=acc[r].slice().sort(function(a,b){ return (/総括/.test(b.label)?1:0)-(/総括/.test(a.label)?1:0); });   // 総括を先頭に
+      // TAGS がある＝締め済みの日。トレの枠に該当する見出しが無ければ「なし」と表示する
+      if(!list.length){ out[r]=(TR_ROWS.indexOf(r)>=0 && tags)?'なし':null; return; }
+      out[r]=list.map(function(x){ return (x.label?'<div class="sublab">'+escHtml(x.label.length>60?x.label.slice(0,60)+'…':x.label)+'</div>\n\n':'')+x.body; }).join('\n\n');
+    });
+    return out;
+  }
+  /* fv-parse:end */
+
+  /* fv-plan:start ── v3.85 現在の運用に合わせた集計（床と帯は AGENTS.md 第9章 2026-09-07 v2） */
+  var FLOOR_P=150, FLOOR_CARB=3.0, KCAL_LO=2000, KCAL_HI=2200;
+  function tnum(v){ if(v==null) return null; var s=String(v).replace(/,/g,'').replace(/\*\*/g,'').trim(); if(s===''||s==='-') return null; var x=parseFloat(s); return isNaN(x)?null:x; }
+  function inYearDate(mo,da){ var y=new Date().getFullYear(); var nm=new Date().getMonth()+1; if(mo-nm>6) y--; else if(nm-mo>6) y++; return new Date(y,mo-1,da); }
+  var PLAN=null;
+  function planInfo(){
+    if(PLAN) return PLAN;
+    var today=new Date(); today.setHours(0,0,0,0);
+    var P={tanita:null,target:null,last:null,weekly:[],design:null,loose:{}};
+    var m=srcCore.match(/次回[＝=]\s*(\d{4})-(\d{2})-(\d{2})/); if(m) P.tanita=new Date(+m[1],+m[2]-1,+m[3]);
+    var t=srcCore.match(/目標値は[^\n]*?([\d.]+)\s*%\s*\/\s*([\d.]+)\s*kg/); if(t) P.target={bf:+t[1],mm:+t[2]};
+    var ti=srcCore.indexOf('TANITA 計測記録');
+    if(ti>=0){
+      var ls=srcCore.slice(ti).split('\n'), hdr=null, rows={};
+      for(var i=1;i<ls.length;i++){ var L=ls[i];
+        if(!/^\s*\|/.test(L)){ if(hdr) break; continue; }
+        var c=L.replace(/^\s*\||\|\s*$/g,'').split('|').map(function(x){return x.replace(/\*\*/g,'').trim();});
+        if(!hdr){ hdr=c; continue; } if(/^:?-+$/.test(c[0])) continue; rows[c[0]]=c; }
+      if(hdr){ var col=-1; hdr.forEach(function(h,j){ if(/\d{4}-\d{2}-\d{2}/.test(h)) col=j; });
+        if(col>=0){ var dm=hdr[col].match(/(\d{4})-(\d{2})-(\d{2})/);
+          P.last={date:new Date(+dm[1],+dm[2]-1,+dm[3]), wt:tnum((rows['体重']||[])[col]), bf:tnum((rows['体脂肪率']||[])[col]), mm:tnum((rows['筋肉量']||[])[col])}; } }
+    }
+    ('\n'+srcEvents).split(/\n(?=##\s)/).forEach(function(b){
+      var head=b.split('\n')[0];
+      var w=head.match(/^##\s*▼▼\s*週次プラン\s*(\d{4})-(\d{2})-(\d{2})[^〜\n]*〜\s*(\d{4})-(\d{2})-(\d{2})/);
+      if(w){ P.weekly.push({from:new Date(+w[1],+w[2]-1,+w[3]), to:new Date(+w[4],+w[5]-1,+w[6]), head:head.replace(/^##\s*/,''), body:b.split('\n').slice(1).join('\n').replace(/\n-{3,}\s*$/,'').trim()}); return; }
+      var d=head.match(/^##\s*[^（\n]*?(\d{1,2})\/(\d{1,2})〜(\d{1,2})\/(\d{1,2})\s*設計/);
+      if(d && head.indexOf('（旧）')<0){
+        var from=inYearDate(+d[1],+d[2]), to=inYearDate(+d[3],+d[4]);
+        if(!P.design || (today>=from && today<=to)) P.design={from:from,to:to,head:head.replace(/^##\s*/,''),body:b.split('\n').slice(1).join('\n').replace(/\n-{3,}\s*$/,'').trim()};
+      }
+    });
+    if(P.design){
+      var k=P.design.body.indexOf('崩れる前提の日');
+      if(k>=0){ var rest=P.design.body.slice(k); var nl=rest.indexOf('\n'); var line=rest.slice(nl+1).split(/。|\n/)[0];
+        var re=/(\d{1,2})\/(\d{1,2})(?:〜(\d{1,2})\/(\d{1,2}))?/g, mm;
+        while((mm=re.exec(line))){ var a=inYearDate(+mm[1],+mm[2]), z=mm[3]?inYearDate(+mm[3],+mm[4]):new Date(a);
+          for(var x=new Date(a); x<=z; x.setDate(x.getDate()+1)) P.loose[ymd(x)]=true; } }
+    }
+    P.weekly.sort(function(a,b){return b.from-a.from;});
+    PLAN=P; return P;
+  }
+  // 1日の栄養（TAGS）。未取得は評価しない（AGENTS.md 第3章）
+  function nutOf(e){
+    if(!e||!e.tags) return null;
+    var n={P:tnum(e.tags.P), kcal:tnum(e.tags.kcal), carb:tnum(e.tags.carb), carbFloor:null, capFree:false};
+    var w=e.wt.am; if(w==null){ for(var i=ORDER.indexOf(e)-1;i>=0;i--){ if(ORDER[i].wt.am!=null){ w=ORDER[i].wt.am; break; } } }
+    if(w!=null) n.carbFloor=Math.round(w*FLOOR_CARB*10)/10;
+    n.capFree=!!(planInfo().loose[ymd(e.date)] || e.capText);
+    return n;
+  }
+  function fmt1(v){ return (Math.round(v*10)/10).toLocaleString('ja-JP',{maximumFractionDigits:1}); }
+  function nutHtml(e, sep){
+    var n=nutOf(e); if(!n) return '';
+    var a=[];
+    if(n.P!=null) a.push('<span class="'+(n.P>=FLOOR_P?'nok':'nng')+'">P '+fmt1(n.P)+'</span>');
+    if(n.carb!=null) a.push('<span class="'+(n.carbFloor==null?'':(n.carb>=n.carbFloor?'nok':'nng'))+'">糖 '+fmt1(n.carb)+'</span>');
+    var k='';
+    if(n.kcal!=null) k='<span class="'+(n.kcal<KCAL_LO?'nng':'')+'">'+Math.round(n.kcal).toLocaleString('ja-JP')+'kcal</span>'+(n.capFree?'<span class="ncap">上限なし</span>':'');
+    return a.join('・')+(k?(a.length?sep:'')+k:'');
+  }
+  // 週次レビュー（events.md 設計v3「■4 週次レビュー」の3指標＋床）
+  function exItems(tags){
+    var out=[]; ['push','pull','legs','core','cardio'].forEach(function(k){ var v=tags[k]; if(!tagOn(v)) return;
+      v.split(',').forEach(function(p){ p=p.trim(); var m=p.match(/^([^\d,]+?)(\d+(?:\.\d+)?)(kg)?/); if(m&&m[3]) out.push({name:m[1].trim(),kg:+m[2]}); }); });
+    return out;
+  }
+  function weekReview(weeks){
+    var thisMon=mondayOf(new Date()), res=[];
+    for(var w=weeks; w>=0; w--){
+      var mon=new Date(thisMon); mon.setDate(mon.getDate()-7*w);
+      var r={mon:mon, days:[], best:{}, noName:[], cardio:[], over:[], free:[], pMiss:[], cMiss:[], tagged:0, nK:0, nP:0, nC:0};
+      for(var i=0;i<7;i++){ var d=new Date(mon); d.setDate(d.getDate()+i); var e=ENTRIES[ymd(d)]; if(!e||!e.tags) continue;
+        r.tagged++; var lab=(d.getMonth()+1)+'/'+d.getDate();
+        var its=exItems(e.tags); its.forEach(function(x){ if(!(x.name in r.best)||x.kg>r.best[x.name]) r.best[x.name]=x.kg; });
+        if(!its.length && ['push','pull','legs','core'].some(function(k){return /^1$/.test(e.tags[k]||'');})) r.noName.push(lab);
+        if(tagOn(e.tags.cardio)) r.cardio.push(lab);
+        var n=nutOf(e);
+        if(n.kcal!=null) r.nK++; if(n.P!=null) r.nP++; if(n.carb!=null && n.carbFloor!=null) r.nC++;
+        if(n.kcal!=null && n.kcal>KCAL_HI){ (n.capFree?r.free:r.over).push(lab); }
+        if(n.P!=null && n.P<FLOOR_P) r.pMiss.push(lab);
+        if(n.carb!=null && n.carbFloor!=null && n.carb<n.carbFloor) r.cMiss.push(lab);
+      }
+      res.push(r);
+    }
+    for(var j=1;j<res.length;j++){ var up=[]; Object.keys(res[j].best).sort().forEach(function(nm){ var p=res[j-1].best[nm]; if(p!=null && res[j].best[nm]>p) up.push(nm+' '+p+'→'+res[j].best[nm]+'kg'); }); res[j].up=up; }
+    return res.slice(1);
+  }
+  function reviewHtml(){
+    var rs=weekReview(4).reverse(), thisMon=ymd(mondayOf(new Date()));
+    function cell(list, goalOk, detail, has, tot){ if(has!=null && tot!=null && has>0 && has<tot) detail=(detail?detail+'<span class="rnote">':'<span class="rnote">')+'値があるのは'+has+'日ぶん</span>'; if(has===0) return '<td><b style="color:var(--muted)">—</b><div class="rdt">TAGS に値なし</div></td>'; return '<td class="'+(goalOk===null?'':(goalOk?'rok':'rng'))+'"><b>'+list+'</b>'+(detail?'<div class="rdt">'+detail+'</div>':'')+'</td>'; }
+    var h='<div class="rvwrap"><table class="rvtab"><thead><tr><th>週（月〜日）</th><th>負荷が上がった種目<br><small>目標 毎週1つ以上</small></th><th>有酸素<br><small>目標 週2回</small></th><th>kcal 上限2,200超<br><small>目標 週2日以内</small></th><th>P 床150未達</th><th>糖質 床未達</th></tr></thead><tbody>';
+    rs.forEach(function(r){
+      var we=new Date(r.mon); we.setDate(we.getDate()+6);
+      var cur=ymd(r.mon)===thisMon;
+      var lab=(r.mon.getMonth()+1)+'/'+r.mon.getDate()+'〜'+(we.getMonth()+1)+'/'+we.getDate()+(cur?'<small>（途中・'+r.tagged+'日）</small>':'');
+      var up=r.up||[];
+      h+='<tr'+(cur?' class="rcur"':'')+'><th>'+lab+'</th>'+
+        // 週の途中は「目標に届いていない」と色で出さない（残りの日で届く可能性があるため）。超過・未達の日数は途中でも確定
+        cell(up.length+'種目', (up.length>=1)?true:(cur?null:false), (up.join('／')||'')+(r.noName.length?('<span class="rnote">種目名なしのTAGS：'+r.noName.join('・')+'</span>'):''), r.tagged)+
+        cell(r.cardio.length+'回', (r.cardio.length>=2)?true:(cur?null:false), r.cardio.join('・'), r.tagged)+
+        cell(r.over.length+'日', r.over.length<=2, r.over.join('・')+(r.free.length?('<span class="rnote">上限なし扱い：'+r.free.join('・')+'</span>'):''), r.nK, r.tagged)+
+        cell(r.pMiss.length+'日', r.pMiss.length===0, r.pMiss.join('・'), r.nP, r.tagged)+
+        cell(r.cMiss.length+'日', r.cMiss.length===0, r.cMiss.join('・'), r.nC, r.tagged)+'</tr>';
+    });
+    return h+'</tbody></table></div><div class="wnote">TAGS から自動集計。「負荷が上がった」＝その週の最高重量が前週を超えた種目（INDEX.md と同じ判定。INDEX.md は直近7日で区切るため、週の途中は数が一致しない）。上限なし扱い＝events.md の「崩れる前提の日」と、log.md に上限を置かないと書かれた日（会食など）。</div>';
+  }
+  function maLatest(){
+    var hist=[], out=null, prev=null;
+    ORDER.forEach(function(e){ if(e.wt.am==null||e.wt.am<WT_MIN||e.wt.am>WT_MAX) return; hist.push(e.wt.am);
+      if(hist.length>=7){ var s=0; for(var i=hist.length-7;i<hist.length;i++) s+=hist[i]; prev=out; out={v:Math.round(s/7*100)/100, n:hist.length, date:e.date}; } });
+    if(out&&prev) out.diff=Math.round((out.v-prev.v)*100)/100;
+    return out;
+  }
+  function daysTo(d){ var t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
+  function chipsHtml(){
+    var P=planInfo(), a=[], ma=maLatest();
+    if(P.tanita){ var n=daysTo(P.tanita); if(n>=0) a.push('<span class="chip ctan">'+(P.tanita.getMonth()+1)+'/'+P.tanita.getDate()+' TANITA '+(n===0?'今日':'あと'+n+'日')+'</span>'); }
+    if(ma) a.push('<span class="chip">朝7点平均 '+ma.v.toFixed(2)+'kg'+(ma.diff!=null?'（'+(ma.diff>0?'+':ma.diff<0?'−':'±')+Math.abs(ma.diff).toFixed(2)+'）':'')+'</span>');
+    return a.length?'<span class="wchips">'+a.join('')+'</span>':'';
+  }
+  /* fv-plan:end */
+
 
   function parseDays(md){
     var re=/##\s*▼\s*([^\n]+)/g, m, marks=[];
@@ -434,16 +749,14 @@ data/core.md を取得できませんでした。通信環境を確認して再�
   }
   function ymd(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
   function mondayOf(d){var x=new Date(d);var wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);x.setHours(0,0,0,0);return x;}
-  function weightVal(c){ if(!c)return null;
-    var m=c.match(/夜\s*\*?\*?\s*(\d{2,3}(?:\.\d)?)\s*kg/); if(m)return parseFloat(m[1]);
-    var m2=c.match(/(\d{2,3}(?:\.\d)?)\s*kg/); return m2?parseFloat(m2[1]):null; }
-
   // 解析（1回）
   var ENTRIES={}; // ymd -> {blocks, label, date}
   parseDays(srcLog).forEach(function(d){
     var dt=dateOf(d.label); if(!dt)return;
-    ENTRIES[ymd(dt)]={blocks:blocksOf(d.text), label:d.label, date:dt};
+    var secs=sectionsOf(d.text), tags=tagsOf(d.text);
+    ENTRIES[ymd(dt)]={rows:rowsOf(secs,tags), tags:tags, wt:weightsFrom(tags,secs), label:d.label, date:dt, capText:/上限(を|は)?(置かない|なし|設けない)/.test(d.text)};
   });
+  var ORDER=Object.keys(ENTRIES).map(function(k){return ENTRIES[k];}).sort(function(a,b){return a.date-b.date;});
   var REVIEWS={};
   parseDays(srcReview).forEach(function(d){ var dt=dateOf(d.label); if(dt) REVIEWS[ymd(dt)]=d.text; });
   function openReview(key){
@@ -487,6 +800,10 @@ data/core.md を取得できませんでした。通信環境を確認して再�
     return tagHtml+tmp.innerHTML;
   }
 
+  function weekNav(wl){
+    var isThis=ymd(curMon)===ymd(mondayOf(new Date()));
+    return '<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button>'+(isThis?'':'<button id="thisW" class="tw">今週</button>')+chipsHtml()+'</div>';
+  }
   function renderCalendar(){
     var today=new Date(); var tkey=ymd(today);
     var days=[]; for(var i=0;i<7;i++){var dt=new Date(curMon);dt.setDate(dt.getDate()+i);days.push(dt);}
@@ -501,7 +818,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
     SECTIONS.forEach(function(sec){
       var tds='<td class="sec">'+sec+'</td>';
       days.forEach(function(dt){
-        var e=ENTRIES[ymd(dt)]; var c=e?e.blocks[sec]:null;
+        var e=ENTRIES[ymd(dt)]; var c=e?e.rows[sec]:null;
         var cls=(ymd(dt)===tkey)?' today':'';
         tds+='<td class="'+cls.trim()+'"><div class="cell">'+cellHtml(c==null?'':c)+'</div></td>';
       });
@@ -510,17 +827,25 @@ data/core.md を取得できませんでした。通信環境を確認して再�
     // 体重行
     var wtds='<td class="sec">体重</td>';
     days.forEach(function(dt){
-      var e=ENTRIES[ymd(dt)]; var w=e?weightVal(e.blocks['体重']):null;
+      var e=ENTRIES[ymd(dt)]; var w=e?e.wt:{am:null,pm:null};
       var cls=(ymd(dt)===tkey)?' today':'';
-      wtds+='<td class="wt'+cls+'">'+(w!=null?w:'<span class="empty" style="font-weight:400">·</span>')+'</td>';
+      var wh=(w.am!=null?w.am.toFixed(1):'')+(w.pm!=null?(w.am!=null?'<small>夜 '+w.pm.toFixed(1)+'</small>':'<small>夜</small>'+w.pm.toFixed(1)):'');
+      wtds+='<td class="wt'+cls+'">'+(wh||'<span class="empty" style="font-weight:400">·</span>')+'</td>';
     });
     rows+='<tr>'+wtds+'</tr>';
+    var ntds='<td class="sec">栄養</td>';
+    days.forEach(function(dt){
+      var e=ENTRIES[ymd(dt)], nh=e?nutHtml(e,'<br>'):'';
+      var cls=(ymd(dt)===tkey)?' today':'';
+      ntds+='<td class="wt nut'+cls+'">'+(nh||'<span class="empty" style="font-weight:400">·</span>')+'</td>';
+    });
+    rows+='<tr>'+ntds+'</tr>';
 
     var ws=new Date(curMon), we=new Date(curMon); we.setDate(we.getDate()+6);
     var wl=(ws.getMonth()+1)+'/'+ws.getDate()+' 〜 '+(we.getMonth()+1)+'/'+we.getDate();
 
     return ''+
-    '<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>'+
+    weekNav(wl)+
     '<div class="calwrap"><table class="cal"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
 
@@ -528,7 +853,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
     var today=new Date(), tkey=ymd(today);
     var ws=new Date(curMon), we=new Date(curMon); we.setDate(we.getDate()+6);
     var wl=(ws.getMonth()+1)+'/'+ws.getDate()+' 〜 '+(we.getMonth()+1)+'/'+we.getDate();
-    var html='<div class="weeknav"><button id="prevW">◀</button><span class="wl">'+wl+'</span><button id="nextW">▶</button></div>';
+    var html=weekNav(wl);
     html+='<div class="mlist">';
     var any=false;
     for(var i=6;i>=0;i--){
@@ -538,11 +863,13 @@ data/core.md を取得できませんでした。通信環境を確認して再�
       html+='<section'+(isT?' id="mtoday"':'')+' class="mday'+(isT?' tday':'')+'">';
       html+='<div class="mdate dhead" data-d="'+ymd(dt)+'">'+(dt.getMonth()+1)+'/'+dt.getDate()+'（'+WD[i]+'）'+(isT?'<span class="tbadge">今日</span>':'')+'</div>';
       SECTIONS.forEach(function(sec){
-        var c=e.blocks[sec];
+        var c=e.rows[sec];
         html+='<div class="mrow"><div class="msec">'+sec+'</div><div class="cell mcell">'+cellHtml(c==null?'':c)+'</div></div>';
       });
-      var w=weightVal(e.blocks['体重']);
-      html+='<div class="mrow"><div class="msec">体重</div><div class="cell mcell mwt">'+(w!=null?w+' kg':'<span class="empty">·</span>')+'</div></div>';
+      var w=e.wt, wm=(w.am!=null?w.am.toFixed(1)+' kg':'')+(w.pm!=null?(w.am!=null?'（夜 '+w.pm.toFixed(1)+'）':'夜 '+w.pm.toFixed(1)+' kg'):'');
+      html+='<div class="mrow"><div class="msec">体重</div><div class="cell mcell mwt">'+(wm||'<span class="empty">·</span>')+'</div></div>';
+      var nh=nutHtml(e,'　');
+      if(nh) html+='<div class="mrow"><div class="msec">栄養</div><div class="cell mcell" style="font-weight:700">'+nh+'</div></div>';
       html+='</section>';
     }
     if(!any) html+='<p class="mempty">この週の記録はありません</p>';
@@ -553,47 +880,88 @@ data/core.md を取得できませんでした。通信環境を確認して再�
   function renderChartsPage(){
     toc.style.display='none'; content.className='';
     content.innerHTML=''+
-      '<div class="chartbox"><div class="chartttl">体重推移（夜kg・目標72kg）</div><div class="cc" style="height:300px"><canvas id="wchart"></canvas></div></div>'+
-      '<div class="chartbox"><div class="chartttl">週次トレ回数（朝・夕・夜トレの実施数）</div><div class="cc" style="height:260px"><canvas id="tchart"></canvas></div></div>';
+      '<div class="chartbox"><div class="chartttl">週次レビュー（直近4週）</div>'+reviewHtml()+'</div>'+
+      '<div class="chartbox"><div class="chartttl">体重推移（朝系列・7点移動平均／夜系列は参考）</div><div class="cc" style="height:300px"><canvas id="wchart"></canvas></div><div class="wnote" id="wnote"></div></div>'+
+      '<div class="chartbox"><div class="chartttl">P・糖質の床に対する割合（直近6週｜床＝100%）</div><div class="cc" style="height:240px"><canvas id="nchart"></canvas></div><div class="wnote">P＝'+FLOOR_P+'g、糖質＝その日の朝体重×'+FLOOR_CARB.toFixed(1)+'g（朝体重が無い日は直前の朝体重）。糖質は TAGS に carb が入った日だけ。</div></div>'+
+      '<div class="chartbox"><div class="chartttl">カロリー（直近6週｜帯 '+KCAL_LO.toLocaleString('ja-JP')+'〜'+KCAL_HI.toLocaleString('ja-JP')+'kcal）</div><div class="cc" style="height:240px"><canvas id="kchart"></canvas></div><div class="wnote">薄い色の日＝上限なし扱い（崩れる前提の日・会食など）。</div></div>'+
+      '<div class="chartbox"><div class="chartttl">週次トレ実施日数（TAGS 集計｜筋トレ・有酸素）</div><div class="cc" style="height:260px"><canvas id="tchart"></canvas></div><div class="wnote">TAGS の push/pull/legs/arms/shoulder/core のどれかが入った日＝筋トレ、cardio が入った日＝有酸素。TAGS 導入前（〜7/25）は旧見出しの有無で数えた日数。</div></div>';
     drawCharts(); window.scrollTo(0,0);
   }
-  var wChart=null, tChart=null;
+  var wChart=null, tChart=null, nChart=null, kChart=null;
+  var WT_MIN=60, WT_MAX=90;   // 範囲外は線から外し、下に日付と値を出す
   function drawCharts(){
-    // 体重：日付昇順で体重がある日
-    var pts=Object.keys(ENTRIES).map(function(k){return ENTRIES[k];})
-      .filter(function(e){return weightVal(e.blocks['体重'])!=null;})
-      .sort(function(a,b){return a.date-b.date;});
-    var wl=pts.map(function(e){return (e.date.getMonth()+1)+'/'+e.date.getDate();});
-    var wv=pts.map(function(e){return weightVal(e.blocks['体重']);});
+    var list=Object.keys(ENTRIES).map(function(k){return ENTRIES[k];}).sort(function(a,b){return a.date-b.date;});
+    var dropped=[];
+    function ok(e,v,tag){ if(v==null) return null; if(v<WT_MIN||v>WT_MAX){ dropped.push((e.date.getMonth()+1)+'/'+e.date.getDate()+' '+tag+' '+v+'kg'); return null; } return v; }
+    // 朝系列の最初の点から表示（朝系列の運用開始＝7/17）
+    var firstAm=null; list.forEach(function(e){ if(firstAm===null && e.wt.am!=null) firstAm=e.date; });
+    var pts=list.filter(function(e){ return (firstAm===null || e.date>=firstAm) && (e.wt.am!=null || e.wt.pm!=null); });
+    var labels=[], am=[], pm=[], ma=[], hist=[];
+    pts.forEach(function(e){
+      var a=ok(e,e.wt.am,'朝'), p=ok(e,e.wt.pm,'夜');
+      labels.push((e.date.getMonth()+1)+'/'+e.date.getDate()); am.push(a); pm.push(p);
+      if(a!=null){ hist.push(a); }
+      if(a!=null && hist.length>=7){ var s=0; for(var i=hist.length-7;i<hist.length;i++) s+=hist[i]; ma.push(Math.round(s/7*100)/100); } else ma.push(null);
+    });
+    var note=document.getElementById('wnote');
+    if(note){ var last=null; for(var i=ma.length-1;i>=0;i--){ if(ma[i]!=null){ last={v:ma[i],d:labels[i]}; break; } }
+      note.textContent=(last?('最新の7点移動平均 '+last.v.toFixed(2)+'kg（'+last.d+'・朝系列 n='+hist.length+'）'):'')+(dropped.length?('　範囲外（'+WT_MIN+'〜'+WT_MAX+'kg外）のため線から除外：'+dropped.join('、')):''); }
     if(wChart)wChart.destroy();
     var wc=document.getElementById('wchart');
     if(wc){ wChart=new Chart(wc,{type:'line',
-      data:{labels:wl,datasets:[
-        {label:'夜体重',data:wv,borderColor:'#E88A0A',backgroundColor:'rgba(232,138,10,.12)',tension:.3,fill:true,pointRadius:4},
-        {label:'目標72kg',data:wl.map(function(){return 72;}),borderColor:'#3AABA8',borderDash:[6,4],pointRadius:0,fill:false}
+      data:{labels:labels,datasets:[
+        {label:'朝系列',data:am,borderColor:'#E88A0A',backgroundColor:'rgba(232,138,10,.10)',borderWidth:1.5,tension:.1,fill:false,pointRadius:3,spanGaps:true},
+        {label:'7点移動平均（判定）',data:ma,borderColor:'#1f7f7d',borderWidth:3,tension:.3,fill:false,pointRadius:0,spanGaps:true},
+        {label:'夜系列（参考）',data:pm,borderColor:'rgba(138,125,99,.55)',backgroundColor:'rgba(138,125,99,.55)',borderWidth:1,borderDash:[4,4],tension:.25,fill:false,pointRadius:2,spanGaps:false}
       ]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#5a4a2e'}}},
-        scales:{y:{suggestedMin:70,suggestedMax:76,ticks:{color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
-                x:{ticks:{color:'#8a7d63',font:{size:11}},grid:{display:false}}}}});
+        scales:{y:{suggestedMin:71,suggestedMax:76,ticks:{color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
+                x:{ticks:{color:'#8a7d63',font:{size:11},autoSkip:true,maxRotation:0},grid:{display:false}}}}});
     }
-    // 週次トレ回数
+    // 栄養（直近6週・TAGS）
+    var lim=new Date(); lim.setHours(0,0,0,0); lim.setDate(lim.getDate()-41);
+    var nd=list.filter(function(e){ return e.tags && e.date>=lim; });
+    var nl=nd.map(function(e){return (e.date.getMonth()+1)+'/'+e.date.getDate();});
+    var ns=nd.map(function(e){return nutOf(e);});
+    if(nChart)nChart.destroy(); var nc=document.getElementById('nchart');
+    if(nc){ nChart=new Chart(nc,{type:'line',data:{labels:nl,datasets:[
+        {label:'P',data:ns.map(function(n){return n.P!=null?Math.round(n.P/FLOOR_P*100):null;}),borderColor:'#3AABA8',backgroundColor:'#3AABA8',borderWidth:2,tension:.1,pointRadius:3,spanGaps:true},
+        {label:'糖質',data:ns.map(function(n){return (n.carb!=null&&n.carbFloor)?Math.round(n.carb/n.carbFloor*100):null;}),borderColor:'#E88A0A',backgroundColor:'#E88A0A',borderWidth:2,tension:.1,pointRadius:3,spanGaps:true},
+        {label:'床 100%',data:nl.map(function(){return 100;}),borderColor:'#8a7d63',borderDash:[6,4],borderWidth:1,pointRadius:0}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#5a4a2e'}}},
+        scales:{y:{suggestedMin:70,suggestedMax:150,ticks:{color:'#8a7d63',font:{size:11},callback:function(v){return v+'%';}},grid:{color:'#eaddc0'}},x:{ticks:{color:'#8a7d63',font:{size:11},maxRotation:0,autoSkip:true},grid:{display:false}}}}}); }
+    if(kChart)kChart.destroy(); var kc=document.getElementById('kchart');
+    if(kc){ kChart=new Chart(kc,{type:'bar',data:{labels:nl,datasets:[
+        {label:'kcal',data:ns.map(function(n){return n.kcal;}),backgroundColor:ns.map(function(n){return n.capFree?'rgba(232,138,10,.35)':'#3AABA8';}),order:2},
+        {type:'line',label:'下限 '+KCAL_LO,data:nl.map(function(){return KCAL_LO;}),borderColor:'#8a7d63',borderDash:[6,4],borderWidth:1,pointRadius:0,order:1},
+        {type:'line',label:'上限 '+KCAL_HI,data:nl.map(function(){return KCAL_HI;}),borderColor:'#b5680a',borderDash:[6,4],borderWidth:1,pointRadius:0,order:1}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#5a4a2e'}}},
+        scales:{y:{suggestedMin:1500,ticks:{color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},x:{ticks:{color:'#8a7d63',font:{size:11},maxRotation:0,autoSkip:true},grid:{display:false}}}}}); }
+    // 週次トレ実施日数（TAGS を正とする）
     var weekMap={};
-    Object.keys(ENTRIES).forEach(function(k){
-      var e=ENTRIES[k]; var mk=ymd(mondayOf(e.date));
-      var cnt=0; ['朝トレ','夕トレ','夜トレ'].forEach(function(s){
-        var c=e.blocks[s]; if(c){var p=c.replace(/[-*\s　・]/g,''); if(p!==''&&p.indexOf('なし')!==0) cnt++;}
-      });
-      weekMap[mk]=(weekMap[mk]||0)+cnt;
+    list.forEach(function(e){
+      var mk=ymd(mondayOf(e.date)); var w=weekMap[mk]||(weekMap[mk]={d:mondayOf(e.date),str:0,car:0,old:0});
+      if(e.tags){
+        if(['push','pull','legs','arms','shoulder','core'].some(function(k){return tagOn(e.tags[k]);})) w.str++;
+        if(tagOn(e.tags.cardio)) w.car++;
+      } else {
+        var any=TR_ROWS.some(function(s){ var c=e.rows[s]; if(!c) return false; var p=c.replace(/<div class="sublab">[^<]*<\/div>/g,'').replace(/[-*\s　・]/g,''); return p!=='' && p.indexOf('なし')!==0; });
+        if(any) w.old++;
+      }
     });
-    var weeks=Object.keys(weekMap).map(function(k){return {k:k,d:new Date(k),v:weekMap[k]};}).sort(function(a,b){return a.d-b.d;});
+    var weeks=Object.keys(weekMap).map(function(k){return weekMap[k];}).sort(function(a,b){return a.d-b.d;});
     var tl=weeks.map(function(w){return (w.d.getMonth()+1)+'/'+w.d.getDate()+'週';});
-    var tv=weeks.map(function(w){return w.v;});
     if(tChart)tChart.destroy();
     var tc=document.getElementById('tchart');
     if(tc){ tChart=new Chart(tc,{type:'bar',
-      data:{labels:tl,datasets:[{label:'トレ回数',data:tv,backgroundColor:'#3AABA8'}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
+      data:{labels:tl,datasets:[
+        {label:'筋トレ日',data:weeks.map(function(w){return w.str||(w.old?null:0);}),backgroundColor:'#3AABA8'},
+        {label:'有酸素日',data:weeks.map(function(w){return w.car||(w.old?null:0);}),backgroundColor:'#E88A0A'},
+        {label:'トレ日（TAGS導入前）',data:weeks.map(function(w){return w.old||null;}),backgroundColor:'#cbb994'},
+        {type:'line',label:'有酸素の目標 週2',data:weeks.map(function(){return 2;}),borderColor:'#E88A0A',borderDash:[6,4],borderWidth:1,pointRadius:0}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#5a4a2e'}}},
+        scales:{y:{beginAtZero:true,suggestedMax:7,ticks:{stepSize:1,color:'#8a7d63',font:{size:11}},grid:{color:'#eaddc0'}},
                 x:{ticks:{color:'#8a7d63',font:{size:11}},grid:{display:false}}}}});
     }
   }
@@ -602,6 +970,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
     var p=document.getElementById('prevW'),n=document.getElementById('nextW');
     if(p)p.onclick=function(){curMon.setDate(curMon.getDate()-7);renderWeek();};
     if(n)n.onclick=function(){curMon.setDate(curMon.getDate()+7);renderWeek();};
+    var t=document.getElementById('thisW'); if(t)t.onclick=function(){curMon=mondayOf(new Date());renderWeek();};
   }
   function renderWeek(){
     toc.style.display='none'; content.className='';
@@ -613,8 +982,17 @@ data/core.md を取得できませんでした。通信環境を確認して再�
       if(tc&&ml){ ml.scrollTop = tc.getBoundingClientRect().top - ml.getBoundingClientRect().top + ml.scrollTop; }
     }
   }
+  // 記録タブ：本体＋archive の結合順に関係なく、日付の新しい順に並べる。archive の冒頭注記は末尾にまとめる
+  function sortedLog(md){
+    var notes=[]; md=md.replace(/^# fitness-log アーカイブ[^\n]*\n[\s\S]*?(?=^## ▼)/gm,function(s){ notes.push(s.trim()); return ''; });
+    var re=/^## ▼\s*(\d{1,2})\/(\d{1,2})/gm, idx=[], m; while((m=re.exec(md))) idx.push({i:m.index,label:m[1]+'/'+m[2]});
+    if(!idx.length) return md;
+    var chunks=idx.map(function(x,k){ return {d:dateOf(x.label), k:k, body:md.slice(x.i, k+1<idx.length?idx[k+1].i:md.length).replace(/\s*$/,'\n\n')}; });
+    chunks.sort(function(a,b){ return (b.d-a.d)||(a.k-b.k); });
+    return md.slice(0,idx[0].i)+chunks.map(function(c){return c.body;}).join('')+(notes.length?'\n---\n\n'+notes.join('\n\n---\n\n')+'\n':'');
+  }
   function renderMd(which){
-    var md=which==='log'?srcLog:srcIns; content.className='md'; content.innerHTML=marked.parse(md);
+    var md=which==='log'?sortedLog(srcLog):srcIns; content.className='md'; content.innerHTML=marked.parse(md);
     toc.innerHTML='';
     if(which==='insights'){var hs=content.querySelectorAll('h3');
       if(hs.length){var html='<div class="toc-h">目次（タップで移動）</div>';
@@ -647,7 +1025,17 @@ data/core.md を取得できませんでした。通信環境を確認して再�
   document.querySelectorAll('.tab').forEach(function(b){
     b.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');render(b.dataset.t);};
   });
-  document.getElementById('built').textContent='ページ生成: '+new Date('2026-06-21T14:48:29Z').toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' JST';
+  (function(){
+    var fmt={timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'};
+    var txt='', ls=window.__fvLastSync, m=ls&&ls.match(/^(\S+Z)\s*(?:\(from\s*([0-9a-f]+)\))?/);
+    if(m && !isNaN(new Date(m[1]))) txt='データ同期: '+new Date(m[1]).toLocaleString('ja-JP',fmt)+' JST'+(m[2]?'（fitness-log '+m[2]+'）':'');
+    else if(window.__fvLogLM && !isNaN(new Date(window.__fvLogLM))) txt='データ更新: '+new Date(window.__fvLogLM).toLocaleString('ja-JP',fmt)+' JST';
+    document.getElementById('built').textContent=txt+(txt?'　':'')+'v3.85';
+  })();
+  // 開いたまま日付が変わった／戻る操作でキャッシュから復元された場合は、読み込み直して今週・最新データにする
+  var LOAD_DAY=ymd(new Date());
+  window.addEventListener('pageshow',function(ev){ if(ev.persisted) location.reload(); });
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && ymd(new Date())!==LOAD_DAY) location.reload(); });
   // 全初期化後に自動アンロック＆初回描画（初期化順バグ対策）
   try{ if(localStorage.getItem('fv_ok')==='1'){ unlock(); } }catch(e){}
 })();
