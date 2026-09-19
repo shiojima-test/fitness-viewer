@@ -179,6 +179,8 @@
 | **合計** | | | **181.8** | **2,023** | **227.9** | |
 
 ### Apple Health 同期（10:32 合図）
+- **18:24 取り込み成功**（原因＝Mac上のiCloudファイルがdatalessのまま読めず。ファイル単位の brctl download／fileproviderctl materialize を入れて解消）
+- ジム実測 `[実測]`：機能的筋力トレーニング 09:12–10:31（1:19:33）平均心拍95.3・最大137・**アクティブ323.6kcal**・合計450.0kcal（＋09:10–09:11 の1分断片 アクティブ3.4kcal）。仮置き約300kcal を差し替え。
 - sync-status＝error／exports: workouts=2026-09-19T00:19・daily=03:46＝書き出しが止まっている。本人にHealth Auto Exportを開いてもらう
 
 TAGS: date=2026-09-19 | push=チェストプレス77kg24,ペックフライ70kg18 | pull=ラットプルダウン70kg15,シーテッドロー84kg15,リアデルト50kg30/60kg10 | legs=レッグプレス120kg24/113kg10 | cardio=0 | core=腹筋20×5 | arms=0 | shoulder=ショルダープレス70kg18/63kg10 | store=昭和店 | wt_am=73.6 | wt_pm=-
