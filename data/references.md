@@ -367,7 +367,7 @@ DHA・EPA（青魚）、α-リノレン酸（アマニ油・エゴマ油）。�
   - 一次資料：ACSM・米国栄養士会・カナダ栄養士会 共同声明「Nutrition and Athletic Performance」（Med Sci Sports Exerc / J Acad Nutr Diet 2016;116:501-528）＝運動量に応じて1日3〜12g/kg、軽い運動・技術系は3〜5g/kg。
   - 一次資料：Henselmans, Vårvik, Izquierdo「The Effect of Carbohydrate Intake on Muscle Hypertrophy: A Systematic Review and Meta-analysis」Sports Med 2026;56:691-702（2026-02-19）＝RCT11本で炭水化物量は筋肥大に有意差なし（確実性は低）。エネルギーとたんぱく質が足りていれば炭水化物量は好みや他の基準で選んでよい。低糖質は食べる量が自然に減りやすい。
   - 一次資料：Henselmans ほか「The Effect of Carbohydrate Intake on Strength and Resistance Training Performance」Nutrients 2022;14:856＝長期17本中15本で筋力の伸びに差なし。1部位10セット以下では糖質の上乗せ効果なし。
-  - 案 v1：炭水化物に固定の上限を置かず、kcal帯（2,000〜2,200）からP150g・脂質約60gを先に引いた残り（約215〜265g）を充てる。筋トレ日・ラン日は3g/kg（73kgで約220g）を目安の下端。長いラン・レース日は5〜7g/kg。1食・間食の上限は置かない。食べ順（R4・R6）はそのまま。
+  - 案 v1：炭水化物に固定の上限を置かず、kcal帯（2,000〜2,200）からP150g・脂質約60gを先に引いた残り（約200〜280g）を充てる。筋トレ日・ラン日は3g/kg（73kgで約220g）を目安の下端。長いラン・レース日は5〜7g/kg。1食・間食の上限は置かない。食べ順（R4・R6）はそのまま。
 
 ---
 
