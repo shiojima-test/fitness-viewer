@@ -600,7 +600,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
   /* fv-parse:end */
 
   /* fv-plan:start ── v3.85 現在の運用に合わせた集計（床と帯は AGENTS.md 第9章 2026-09-07 v2） */
-  var FLOOR_P=150, FLOOR_CARB=3.0, KCAL_LO=2000, KCAL_HI=2200;
+  var FLOOR_P=150, FLOOR_CARB=3.0, KCAL_LO=2000, KCAL_HI=2350, KCAL_WEEK=14700;
   function tnum(v){ if(v==null) return null; var s=String(v).replace(/,/g,'').replace(/\*\*/g,'').trim(); if(s===''||s==='-') return null; var x=parseFloat(s); return isNaN(x)?null:x; }
   function inYearDate(mo,da){ var y=new Date().getFullYear(); var nm=new Date().getMonth()+1; if(mo-nm>6) y--; else if(nm-mo>6) y++; return new Date(y,mo-1,da); }
   var PLAN=null;
@@ -677,7 +677,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
         if(!its.length && ['push','pull','legs','core'].some(function(k){return /^1$/.test(e.tags[k]||'');})) r.noName.push(lab);
         if(tagOn(e.tags.cardio)) r.cardio.push(lab);
         var n=nutOf(e);
-        if(n.kcal!=null) r.nK++; if(n.P!=null) r.nP++; if(n.carb!=null && n.carbFloor!=null) r.nC++;
+        if(n.kcal!=null){ r.nK++; r.sumK=(r.sumK||0)+n.kcal; } if(n.P!=null) r.nP++; if(n.carb!=null && n.carbFloor!=null) r.nC++;
         if(n.kcal!=null && n.kcal>KCAL_HI){ (n.capFree?r.free:r.over).push(lab); }
         if(n.P!=null && n.P<FLOOR_P) r.pMiss.push(lab);
         if(n.carb!=null && n.carbFloor!=null && n.carb<n.carbFloor) r.cMiss.push(lab);
@@ -690,7 +690,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
   function reviewHtml(){
     var rs=weekReview(4).reverse(), thisMon=ymd(mondayOf(new Date()));
     function cell(list, goalOk, detail, has, tot){ if(has!=null && tot!=null && has>0 && has<tot) detail=(detail?detail+'<span class="rnote">':'<span class="rnote">')+'値があるのは'+has+'日ぶん</span>'; if(has===0) return '<td><b style="color:var(--muted)">—</b><div class="rdt">TAGS に値なし</div></td>'; return '<td class="'+(goalOk===null?'':(goalOk?'rok':'rng'))+'"><b>'+list+'</b>'+(detail?'<div class="rdt">'+detail+'</div>':'')+'</td>'; }
-    var h='<div class="rvwrap"><table class="rvtab"><thead><tr><th>週（月〜日）</th><th>負荷が上がった種目<br><small>目標 毎週1つ以上</small></th><th>有酸素<br><small>目標 週2回</small></th><th>kcal 上限2,200超<br><small>目標 週2日以内</small></th><th>P 床150未達</th><th>糖質 床未達</th></tr></thead><tbody>';
+    var h='<div class="rvwrap"><table class="rvtab"><thead><tr><th>週（月〜日）</th><th>負荷が上がった種目<br><small>目標 毎週1つ以上</small></th><th>有酸素<br><small>目標 週2回</small></th><th>kcal 週合計<br><small>目標 14,700以下・2,350超 0日</small></th><th>P 床150未達</th><th>糖質 床未達</th></tr></thead><tbody>';
     rs.forEach(function(r){
       var we=new Date(r.mon); we.setDate(we.getDate()+6);
       var cur=ymd(r.mon)===thisMon;
@@ -700,7 +700,7 @@ data/core.md を取得できませんでした。通信環境を確認して再�
         // 週の途中は「目標に届いていない」と色で出さない（残りの日で届く可能性があるため）。超過・未達の日数は途中でも確定
         cell(up.length+'種目', (up.length>=1)?true:(cur?null:false), (up.join('／')||'')+(r.noName.length?('<span class="rnote">種目名なしのTAGS：'+r.noName.join('・')+'</span>'):''), r.tagged)+
         cell(r.cardio.length+'回', (r.cardio.length>=2)?true:(cur?null:false), r.cardio.join('・'), r.tagged)+
-        cell(r.over.length+'日', r.over.length<=2, r.over.join('・')+(r.free.length?('<span class="rnote">上限なし扱い：'+r.free.join('・')+'</span>'):''), r.nK, r.tagged)+
+        cell(Math.round(r.sumK||0).toLocaleString('ja-JP')+'（2,350超 '+r.over.length+'日）', (r.sumK||0)<=KCAL_WEEK*r.nK/7+1 && r.over.length===0, r.over.join('・')+(r.free.length?('<span class="rnote">上限なし扱い：'+r.free.join('・')+'</span>'):''), r.nK, r.tagged)+
         cell(r.pMiss.length+'日', r.pMiss.length===0, r.pMiss.join('・'), r.nP, r.tagged)+
         cell(r.cMiss.length+'日', r.cMiss.length===0, r.cMiss.join('・'), r.nC, r.tagged)+'</tr>';
     });
