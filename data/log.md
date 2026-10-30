@@ -40,6 +40,12 @@
 
 ---
 
+## ▼ 10/31（土）**（予定は2通目でGoogleカレンダー直参照）**／**朝系列 73.1kg**
+TAGS: date=2026-10-31 | push=- | pull=- | shoulder=- | legs=- | arms=- | cardio=- | core=- | store=- | P=- | kcal=- | carb=- | fluid=- | wt_am=73.1 | wt_pm=-
+
+### 体重
+- 自宅タニタ 07:13：体重73.1kg／BMI25.0／体脂肪率18.7%／筋肉量56.3kg／推定骨量3.1kg／内臓脂肪9.5／基礎代謝1,670kcal（画面写真・tables/tanita-home.csv に記録）
+
 ## ▼ 10/30（金）**13:00–14:00 大塚食品（リモート）／15:00–16:00 サカタのタネmtg／16:00–17:00 春原さん／18:00–21:00 事前準備**（Googleカレンダー直参照 00:5x）／**朝系列 72.2kg**
 TAGS: date=2026-10-30 | push=- | pull=- | shoulder=- | legs=- | arms=- | cardio=- | core=- | store=- | P=189.2 | kcal=2602 | carb=184.6 | fluid=2525 | wt_am=72.2 | wt_pm=-
 
