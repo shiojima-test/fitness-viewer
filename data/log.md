@@ -41,7 +41,7 @@
 ---
 
 ## ▼ 11/15（日）**09:30–11:40 午前ジム 8種目＋傾斜ウォーク40分**（Googleカレンダー直参照 07:4x）／**朝系列 72.5kg**
-TAGS: date=2026-11-15 | push=- | pull=- | shoulder=- | legs=- | arms=- | cardio=- | core=- | store=- | P=38.6 | kcal=332 | carb=15.7 | fluid=275 | wt_am=72.5 | wt_pm=-
+TAGS: date=2026-11-15 | push=- | pull=- | shoulder=- | legs=レッグプレス154kg8/147kg8/141kg8/134kg8 | arms=- | cardio=- | core=- | store=- | P=38.6 | kcal=332 | carb=15.7 | fluid=275 | wt_am=72.5 | wt_pm=-
 
 ### 体重
 - 自宅タニタ 07:40：体重72.5kg／BMI24.8／体脂肪率18.2%／筋肉量56.2kg／推定骨量3.1kg／内臓脂肪9.0／基礎代謝1,666kcal（画面写真・tables/tanita-home.csv に記録）
@@ -52,6 +52,12 @@ TAGS: date=2026-11-15 | push=- | pull=- | shoulder=- | legs=- | arms=- | cardio=
 
 ### 朝トレ
 なし
+
+### 朝トレ（ジム 11:0x〜・グルートは使えず＝本人申告）
+| 種目 | アップ | メイン1 | メイン2 | メイン3 | ラスト |
+|---|---|---|---|---|---|
+| レッグプレス | 79×8 | 134×8（R2） | 141×8（R2） | 147×8（R1） | 154×8（R0） |
+- 原文：「147 8回」「154 8回」＝この店のピンは147・154。推定1RM 195kg（10/29夜 179kg）
 
 ## ▼ 11/14（土）朝｜ホテル（体重なし）
 TAGS: date=2026-11-14 | push=- | pull=- | shoulder=- | legs=- | arms=- | cardio=- | core=- | store=ホテル | P=166.1 | kcal=2873 | carb=253.6 | fluid=- | wt_am=- | wt_pm=-
